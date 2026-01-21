@@ -1,0 +1,14 @@
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         version="3.0">
+
+    <servlet>
+        <servlet-name>SaveBillServlet</servlet-name>
+        <servlet-class>com.svs.SaveBillServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>SaveBillServlet</servlet-name>
+        <url-pattern>/SaveBillServlet</url-pattern>
+    </servlet-mapping>
+
+</web-app>
