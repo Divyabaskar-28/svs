@@ -1,5 +1,6 @@
 FROM tomcat:9.0
 
-COPY dist/svs.war /usr/local/tomcat/webapps/svs.war
+COPY dist/SVS.war /usr/local/tomcat/webapps/SVS.war
 
 EXPOSE 8080
+
