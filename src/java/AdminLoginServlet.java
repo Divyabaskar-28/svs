@@ -4,41 +4,68 @@ import java.sql.*;
 import javax.servlet.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import DBConnection.DBConnection;   // ✅ import DBConnection
 
 @WebServlet("/AdminLoginServlet")
 public class AdminLoginServlet extends HttpServlet {
 
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/svs";
-    private static final String DB_USER = "root";
-    private static final String DB_PASS = "";
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String uname = request.getParameter("username");
         String pass = request.getParameter("password");
 
-        try {
-            Class.forName("com.mysql.jdbc.Driver"); // Or com.mysql.cj.jdbc.Driver if using newer MySQL
-            Connection con = DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASS);
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-            PreparedStatement ps = con.prepareStatement("SELECT * FROM admin_login WHERE username=? AND password=?");
+        try {
+            // ✅ Dynamic DB connection
+            con = DBConnection.getConnection();
+
+            ps = con.prepareStatement(
+                    "SELECT * FROM admin_login WHERE username=? AND password=?"
+            );
             ps.setString(1, uname);
             ps.setString(2, pass);
 
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                // Success: store session
-                HttpSession session = request.getSession();
-                session.setAttribute("admin_username", rs.getString("username")); // Session from DB value
+            rs = ps.executeQuery();
 
-                response.sendRedirect("AdminDashboard.jsp"); // Redirect after login
+            if (rs.next()) {
+                // ✅ Login success → create session
+                HttpSession session = request.getSession();
+                session.setAttribute("admin_username", rs.getString("username"));
+
+                response.sendRedirect("AdminDashboard.jsp");
             } else {
                 response.setContentType("text/html");
-                response.getWriter().println("<script>alert('Invalid Username or Password!'); location='Login.jsp';</script>");
+                response.getWriter().println(
+                        "<script>alert('Invalid Username or Password!'); location='Login.jsp';</script>"
+                );
             }
 
-            con.close();
         } catch (Exception e) {
             e.printStackTrace();
+            response.getWriter().println("Error: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (ps != null) {
+                    ps.close();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (Exception e) {
+            }
         }
     }
 }

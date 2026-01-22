@@ -1,5 +1,7 @@
 <%@ page import="java.sql.*, java.text.SimpleDateFormat, java.util.Date" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="DBConnection.DBConnection" %>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -64,20 +66,20 @@
                 </thead>
 
                 <tbody>
-                    <%                try {
-                            Class.forName("com.mysql.jdbc.Driver");
-                            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
+                    <%                        try {
+                            Connection con = DBConnection.getConnection();
                             Statement stmt = con.createStatement();
-                            ResultSet rs = stmt.executeQuery("SELECT * FROM bills ORDER BY created_at DESC");
+                            ResultSet rs = stmt.executeQuery(
+                                    "SELECT * FROM bills ORDER BY created_at DESC"
+                            );
 
-                           SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
 
                             while (rs.next()) {
                                 String invoice = rs.getString("invoice_no");
                                 String customer = rs.getString("customer_name");
                                 Date billDate = rs.getDate("bill_date");
                                 double daysAmount = rs.getDouble("days_amount");
-
                                 String createdBy = rs.getString("created_by");
                                 Timestamp createdAt = rs.getTimestamp("created_at");
                     %>
@@ -86,7 +88,6 @@
                         <td><%= customer%></td>
                         <td><%= (billDate != null ? sdf.format(billDate) : "")%></td>
                         <td><%= daysAmount%></td>
-
                         <td><%= (createdBy != null ? createdBy : "")%></td>
                         <td><%= (createdAt != null ? sdf.format(createdAt) : "")%></td>
                     </tr>
@@ -96,9 +97,13 @@
                             stmt.close();
                             con.close();
                         } catch (Exception e) {
-                            out.println("<tr><td colspan='6' class='text-danger'>Error: " + e.getMessage() + "</td></tr>");
+                            out.println(
+                                    "<tr><td colspan='6' class='text-danger'>Error: "
+                                    + e.getMessage() + "</td></tr>"
+                            );
                         }
                     %>
+
                 </tbody>
             </table>
         </div>

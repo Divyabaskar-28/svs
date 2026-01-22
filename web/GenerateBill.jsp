@@ -1,5 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*" %>
+
+<%@ page import="java.sql.*" %>
+<%@ page import="DBConnection.DBConnection" %>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -105,23 +109,22 @@
                 <div class="col-md-6">
                     <select id="customerName" class="form-select" onchange="updateDisplay()" required>
                         <option value="">-- Select Customer --</option>
-                        <%            try {
-                                Class.forName("com.mysql.jdbc.Driver");
-                                Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
-                                Statement stmt = con.createStatement();
-                                ResultSet rs = stmt.executeQuery("SELECT name FROM customers ORDER BY name ASC");
+                        <%                           try (Connection con = DBConnection.getConnection();
+                                    Statement stmt = con.createStatement();
+                                    ResultSet rs = stmt.executeQuery("SELECT name FROM customers ORDER BY name ASC")) {
+
                                 while (rs.next()) {
                                     String custName = rs.getString("name");
                         %>
                         <option value="<%= custName%>"><%= custName%></option>
                         <%
                                 }
-                                con.close();
                             } catch (Exception e) {
                                 out.println("<option disabled>Error loading customers</option>");
                                 e.printStackTrace();
                             }
                         %>
+
                     </select>
                 </div>
 

@@ -1,5 +1,8 @@
 <%@ page import="java.sql.*" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<%@ page import="DBConnection.DBConnection" %>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -117,21 +120,19 @@
         <div class="container">
             <h2>Edit Customer</h2>
 
-            <%        int id = Integer.parseInt(request.getParameter("id"));
-                Connection con = null;
-                PreparedStatement ps = null;
-                ResultSet rs = null;
+            <%               int id = Integer.parseInt(request.getParameter("id"));
 
-                try {
-                    Class.forName("com.mysql.jdbc.Driver");
-                    con = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
-
-                    ps = con.prepareStatement("SELECT * FROM customers WHERE id = ?");
+                try (
+                        Connection con = DBConnection.getConnection();
+                        PreparedStatement ps = con.prepareStatement(
+                                "SELECT * FROM customers WHERE id = ?"
+                        )) {
                     ps.setInt(1, id);
-                    rs = ps.executeQuery();
+                    ResultSet rs = ps.executeQuery();
 
                     if (rs.next()) {
             %>
+
 
             <!-- ✅ Add name="customerForm" for JS validation -->
             <form name="customerForm" action="UpdateCustomerServlet" method="post" onsubmit="return validateForm();">
@@ -203,27 +204,9 @@
                     }
                 } catch (Exception e) {
                     out.println("<p class='text-danger'>Error: " + e.getMessage() + "</p>");
-                } finally {
-                    try {
-                        if (rs != null) {
-                            rs.close();
-                        }
-                    } catch (Exception e) {
-                    }
-                    try {
-                        if (ps != null) {
-                            ps.close();
-                        }
-                    } catch (Exception e) {
-                    }
-                    try {
-                        if (con != null) {
-                            con.close();
-                        }
-                    } catch (Exception e) {
-                    }
                 }
             %>
+
 
         </div>
     </body>

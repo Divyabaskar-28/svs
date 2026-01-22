@@ -1,5 +1,7 @@
 <%@ page import="java.sql.*" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<%@ page import="DBConnection.DBConnection" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -74,18 +76,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <%                Connection conn = null;
-                        PreparedStatement stmt = null;
-                        ResultSet rs = null;
+                <tbody>
+                    <%    boolean hasResults = false;
 
-                        try {
-                            Class.forName("com.mysql.jdbc.Driver");
-                            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
-                            String sql = "SELECT * FROM customers ORDER BY created_at DESC";
-                            stmt = conn.prepareStatement(sql);
-                            rs = stmt.executeQuery();
-
-                            boolean hasResults = false;
+                        try (
+                                Connection conn = DBConnection.getConnection();
+                                PreparedStatement stmt
+                                = conn.prepareStatement("SELECT * FROM customers ORDER BY created_at DESC");
+                                ResultSet rs = stmt.executeQuery();) {
 
                             while (rs.next()) {
                                 hasResults = true;
@@ -103,56 +101,42 @@
                         <td><%= rs.getFloat("distance")%></td>
                         <td><%= rs.getString("email")%></td>
                         <td><%= rs.getString("created_by")%></td>
-                        <%
-                            java.sql.Timestamp timestamp = rs.getTimestamp("created_at");
-                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd-MM-yyyy");
-                            String formattedDate = sdf.format(timestamp);
-                        %>
-                        <td><%= formattedDate%></td>
+                        <td>
+                            <%= new java.text.SimpleDateFormat("dd-MM-yyyy")
+                .format(rs.getTimestamp("created_at"))%>
+                        </td>
                         <td>
                             <form method="get" action="EditCustomer.jsp">
                                 <input type="hidden" name="id" value="<%= rs.getInt("id")%>">
-                                <input type="submit" value="Edit" class="btn-edit">
+                                <button type="submit" class="btn-edit">Edit</button>
                             </form>
                         </td>
                     </tr>
                     <%
                         }
+
                         if (!hasResults) {
                     %>
                     <tr>
-                        <td colspan="14" class="text-center text-danger">No customers found.</td>
+                        <td colspan="14" class="text-center text-danger">
+                            No customers found.
+                        </td>
                     </tr>
                     <%
                         }
+
                     } catch (Exception e) {
                     %>
                     <tr>
-                        <td colspan="14" class="text-danger text-center">Error: <%= e.getMessage()%></td>
+                        <td colspan="14" class="text-danger text-center">
+                            Error: <%= e.getMessage()%>
+                        </td>
                     </tr>
                     <%
-                        } finally {
-                            try {
-                                if (rs != null) {
-                                    rs.close();
-                                }
-                            } catch (Exception e) {
-                            }
-                            try {
-                                if (stmt != null) {
-                                    stmt.close();
-                                }
-                            } catch (Exception e) {
-                            }
-                            try {
-                                if (conn != null) {
-                                    conn.close();
-                                }
-                            } catch (Exception e) {
-                            }
                         }
                     %>
                 </tbody>
+
             </table>
         </div>
 

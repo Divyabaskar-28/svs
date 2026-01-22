@@ -1,5 +1,6 @@
-<%@ page import="java.sql.*, java.io.*, javax.servlet.*, javax.servlet.http.*" %>
+<%@ page import="java.sql.*, java.io.*" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="DBConnection.DBConnection" %>
 
 <%
     response.setContentType("application/vnd.ms-excel");
@@ -7,16 +8,18 @@
 
     PrintWriter outExcel = response.getWriter();
 
+    // Excel Header
     outExcel.println("Invoice No\tCustomer Name\tBilling Date\tDay's Amount\tCreated By\tCreated At");
 
-    try {
-        Class.forName("com.mysql.jdbc.Driver");
-        Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
-        Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM bills ORDER BY created_at DESC");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
-        // Format date only
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    try (
+        Connection con = DBConnection.getConnection();
+        PreparedStatement ps = con.prepareStatement(
+            "SELECT * FROM bills ORDER BY created_at DESC"
+        );
+        ResultSet rs = ps.executeQuery();
+    ) {
 
         while (rs.next()) {
             String invoice = rs.getString("invoice_no");
@@ -26,17 +29,17 @@
             String createdBy = rs.getString("created_by");
             Timestamp createdAt = rs.getTimestamp("created_at");
 
-            outExcel.println(invoice + "\t" + customer + "\t"
-                    + (billDate != null ? dateFormat.format(billDate) : "") + "\t"
-                    + daysAmount + "\t"
-                    + (createdBy != null ? createdBy : "") + "\t"
-                    + (createdAt != null ? dateFormat.format(createdAt) : ""));
+            outExcel.println(
+                invoice + "\t" +
+                customer + "\t" +
+                (billDate != null ? dateFormat.format(billDate) : "") + "\t" +
+                daysAmount + "\t" +
+                (createdBy != null ? createdBy : "") + "\t" +
+                (createdAt != null ? dateFormat.format(createdAt) : "")
+            );
         }
 
-        rs.close();
-        stmt.close();
-        con.close();
     } catch (Exception e) {
-        outExcel.println("Error:\t" + e.getMessage());
+        outExcel.println("Error\t" + e.getMessage());
     }
 %>

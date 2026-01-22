@@ -4,13 +4,10 @@ import java.sql.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import DBConnection.DBConnection;   // ✅ import your DBConnection class
 
 @WebServlet("/UpdateCustomerServlet")
 public class UpdateCustomerServlet extends HttpServlet {
-
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/svs";
-    private static final String DB_USER = "root";
-    private static final String DB_PASS = "";
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -32,10 +29,12 @@ public class UpdateCustomerServlet extends HttpServlet {
         PreparedStatement ps = null;
 
         try {
-            float distance = distanceStr != null && !distanceStr.isEmpty() ? Float.parseFloat(distanceStr) : 0;
+            float distance = (distanceStr != null && !distanceStr.isEmpty())
+                    ? Float.parseFloat(distanceStr)
+                    : 0;
 
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASS);
+            // ✅ Use dynamic DB connection
+            con = DBConnection.getConnection();
 
             String sql = "UPDATE customers SET name=?, organisation=?, place=?, district=?, state=?, pincode=?, mobile=?, alt_mobile=?, gst_number=?, distance=?, email=? WHERE id=?";
             ps = con.prepareStatement(sql);
@@ -56,7 +55,7 @@ public class UpdateCustomerServlet extends HttpServlet {
             int updated = ps.executeUpdate();
 
             if (updated > 0) {
-                response.sendRedirect("CustomerDetails.jsp"); // <-- change to your page
+                response.sendRedirect("CustomerDetails.jsp");
             } else {
                 response.getWriter().println("Failed to update customer.");
             }

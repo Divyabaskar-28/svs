@@ -1,11 +1,12 @@
 package com.svs;
-import java.text.SimpleDateFormat;
 
+import java.text.SimpleDateFormat;
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.sql.*;
 import org.json.*;
+import DBConnection.DBConnection; // <- Use your DBConnection class
 
 public class SaveBillServlet extends HttpServlet {
 
@@ -16,12 +17,13 @@ public class SaveBillServlet extends HttpServlet {
             response.sendRedirect("Login.jsp");
             return;
         }
-         String createdBy = (String) session.getAttribute("admin_username");
+
+        String createdBy = (String) session.getAttribute("admin_username");
 
         String invoice = request.getParameter("invoice_no");
         String name = request.getParameter("customer_name");
         String rawDate = request.getParameter("bill_date"); // yyyy-MM-dd
-       java.sql.Date sqlDate = java.sql.Date.valueOf(rawDate);  // Keep as yyyy-MM-dd
+        java.sql.Date sqlDate = java.sql.Date.valueOf(rawDate);  // Keep as yyyy-MM-dd
 
         String daysAmount = request.getParameter("days_amount");
         String balance = request.getParameter("balance");
@@ -33,11 +35,11 @@ public class SaveBillServlet extends HttpServlet {
         PreparedStatement ps1 = null, ps2 = null;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
+            // ✅ Use dynamic DBConnection class
+            con = DBConnection.getConnection();
 
             // Insert into bill_summary
-           String insertBillQuery = "INSERT INTO bills (invoice_no, customer_name, bill_date, days_amount, balance, total_amount, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+            String insertBillQuery = "INSERT INTO bills (invoice_no, customer_name, bill_date, days_amount, balance, total_amount, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
             ps1 = con.prepareStatement(insertBillQuery);
             ps1.setString(1, invoice);
             ps1.setString(2, name);

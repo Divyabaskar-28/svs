@@ -4,15 +4,12 @@ import java.sql.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import DBConnection.DBConnection;   // ✅ Import common DB connection
 
 @WebServlet("/AddCustomerServlet")
 public class AddCustomerServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/svs";
-    private static final String JDBC_USER = "root";
-    private static final String JDBC_PASS = "";
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -32,8 +29,8 @@ public class AddCustomerServlet extends HttpServlet {
         String state = request.getParameter("state").trim();
         String pincode = request.getParameter("pincode").trim();
         String mobile = request.getParameter("mobile").trim();
-        String alt_mobile = request.getParameter("alt_mobile").trim();
-        String gst_number = request.getParameter("gst").trim();
+        String altMobile = request.getParameter("alt_mobile").trim();
+        String gstNumber = request.getParameter("gst").trim();
         String distanceStr = request.getParameter("distance").trim();
         String email = request.getParameter("email").trim();
 
@@ -50,23 +47,25 @@ public class AddCustomerServlet extends HttpServlet {
         ResultSet rs = null;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+            // ✅ Dynamic DB connection
+            conn = DBConnection.getConnection();
 
-            // Check if customer name already exists
+            // 🔍 Check if customer already exists
             String checkSql = "SELECT id FROM customers WHERE name = ?";
             checkStmt = conn.prepareStatement(checkSql);
             checkStmt.setString(1, name);
             rs = checkStmt.executeQuery();
 
             if (rs.next()) {
-                // Customer with same name exists
                 response.sendRedirect("AddCustomer.jsp?error=exists");
                 return;
             }
 
-            // Proceed to insert
-            String insertSql = "INSERT INTO customers (name, organisation, place, district, state, pincode, mobile, alt_mobile, gst_number, distance, email, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // ➕ Insert customer
+            String insertSql
+                    = "INSERT INTO customers "
+                    + "(name, organisation, place, district, state, pincode, mobile, alt_mobile, gst_number, distance, email, created_by) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             insertStmt = conn.prepareStatement(insertSql);
             insertStmt.setString(1, name);
@@ -76,8 +75,8 @@ public class AddCustomerServlet extends HttpServlet {
             insertStmt.setString(5, state);
             insertStmt.setString(6, pincode);
             insertStmt.setString(7, mobile);
-            insertStmt.setString(8, alt_mobile);
-            insertStmt.setString(9, gst_number);
+            insertStmt.setString(8, altMobile);
+            insertStmt.setString(9, gstNumber);
             insertStmt.setFloat(10, distance);
             insertStmt.setString(11, email);
             insertStmt.setString(12, createdBy);
@@ -92,7 +91,7 @@ public class AddCustomerServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("AddCustomer.jsp?error=insert_failed");
+            response.sendRedirect("AddCustomer.jsp?error=exception");
         } finally {
             try {
                 if (rs != null) {

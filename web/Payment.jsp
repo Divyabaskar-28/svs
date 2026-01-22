@@ -1,4 +1,6 @@
 <%@ page import="java.sql.*" %>
+<%@ page import="DBConnection.DBConnection" %>
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html>
@@ -44,21 +46,29 @@
                     <label>Customer Name</label>
                     <select name="customer_name" id="customerSelect" class="form-select" onchange="fetchTotalAmount()" required>
                         <option value="">-- Select Customer --</option>
-                        <%                    try {
-                                Class.forName("com.mysql.jdbc.Driver");
-                                Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/svs", "root", "");
-                                Statement st = con.createStatement();
-                                ResultSet rs = st.executeQuery("SELECT DISTINCT customer_name FROM bills");
-                                while (rs.next()) {
+                        <%
+    try {
+        Connection con = DBConnection.getConnection();
+        Statement st = con.createStatement();
+        ResultSet rs = st.executeQuery(
+            "SELECT DISTINCT customer_name FROM bills"
+        );
+
+        while (rs.next()) {
                         %>
-                        <option value="<%= rs.getString("customer_name")%>"><%= rs.getString("customer_name")%></option>
+                        <option value="<%= rs.getString("customer_name") %>">
+                            <%= rs.getString("customer_name") %>
+                        </option>
                         <%
                                 }
+                                rs.close();
+                                st.close();
                                 con.close();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         %>
+
                     </select>
                 </div>
 
