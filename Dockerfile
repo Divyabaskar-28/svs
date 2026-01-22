@@ -1,5 +1,6 @@
 FROM tomcat:9.0
 
-COPY dist/SVS.war /usr/local/tomcat/webapps/SVS.war
+COPY SVS.war /usr/local/tomcat/webapps/SVS.war
+
 
 
