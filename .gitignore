@@ -1,4 +1,6 @@
 /build/
+/dist/*
+!/dist/CVMS.war
 
 /nbproject/private/
 /target/
