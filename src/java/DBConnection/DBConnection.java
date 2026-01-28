@@ -18,7 +18,8 @@ public class DBConnection {
             // ===== Online PostgreSQL (Render) =====
             Class.forName("org.postgresql.Driver");
             
-            url = "jdbc:postgresql://dpg-d5sqhqnpm1nc73ciort0-a.singapore-postgres.render.com:5432/svsdb";
+           
+            url = "jdbc:postgresql://dpg-d5sqhqnpm1nc73ciort0-a.singapore-postgres.render.com:5432/svsdb?sslmode=require";
             username = "svsdb_user";
             password = "qQJbW7HKaALzEbq56aF55Pd9gIEdQDmG";
         } else {
