@@ -1,8 +1,4 @@
-<%@ page import="java.sql.*, org.json.simple.JSONObject" %>
-<%@ page contentType="application/json;charset=UTF-8" %>
-<%@ page import="java.sql.*" %>
-<%@ page import="org.json.simple.JSONObject" %>
-<%@ page import="DBConnection.DBConnection" %>
+<%@ page import="java.sql.*, org.json.simple.JSONObject, DBConnection.DBConnection" %>
 <%@ page contentType="application/json;charset=UTF-8" %>
 
 <%
@@ -11,14 +7,20 @@ JSONObject json = new JSONObject();
 
 if (customerName != null && !customerName.trim().isEmpty()) {
 
-    try (Connection con = DBConnection.getConnection()) {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
 
-        PreparedStatement ps = con.prepareStatement(
-            "SELECT balance FROM bills WHERE customer_name=? ORDER BY created_at DESC LIMIT 1"
-        );
+    try {
+        // ✅ Dynamic DB connection (local MySQL or Render PostgreSQL)
+        con = DBConnection.getConnection();
+
+        // PostgreSQL & MySQL compatible query
+        String sql = "SELECT balance FROM bills WHERE customer_name = ? ORDER BY created_at DESC LIMIT 1";
+        ps = con.prepareStatement(sql);
         ps.setString(1, customerName);
 
-        ResultSet rs = ps.executeQuery();
+        rs = ps.executeQuery();
 
         if (rs.next()) {
             json.put("balance", rs.getDouble("balance"));
@@ -26,11 +28,13 @@ if (customerName != null && !customerName.trim().isEmpty()) {
             json.put("balance", 0);
         }
 
-        rs.close();
-        ps.close();
-
     } catch (Exception e) {
+        e.printStackTrace();
         json.put("error", e.getMessage());
+    } finally {
+        try { if (rs != null) rs.close(); } catch (Exception e) {}
+        try { if (ps != null) ps.close(); } catch (Exception e) {}
+        try { if (con != null) con.close(); } catch (Exception e) {}
     }
 
 } else {

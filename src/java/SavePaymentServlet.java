@@ -1,10 +1,11 @@
+package DBConnection;
 
 import java.io.IOException;
 import java.sql.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
-import DBConnection.DBConnection;   // ✅ import DBConnection
+import DBConnection.DBConnection;   // ✅ import your DBConnection class
 
 @WebServlet("/SavePaymentServlet")
 public class SavePaymentServlet extends HttpServlet {
@@ -29,14 +30,18 @@ public class SavePaymentServlet extends HttpServlet {
         PreparedStatement ps = null;
 
         try {
-            // ✅ Dynamic DB connection
+            // ✅ Dynamic DB connection (local MySQL or Render PostgreSQL)
             con = DBConnection.getConnection();
 
-            String sql = "UPDATE bills SET paid_amount = ?, return_amount = ?, balance = ?, "
-                    + "payment_mode = ?, payment_time = CURRENT_TIMESTAMP(), "
+            // ============================
+            // Use a subquery to update the latest row (works in both MySQL and PostgreSQL)
+            // ============================
+            String sql = "UPDATE bills SET "
+                    + "paid_amount = ?, return_amount = ?, balance = ?, "
+                    + "payment_mode = ?, payment_time = CURRENT_TIMESTAMP, "
                     + "return_time = ?, paid_by = ? "
-                    + "WHERE customer_name = ? "
-                    + "ORDER BY created_at DESC LIMIT 1";
+                    + "WHERE id = (SELECT id FROM bills WHERE customer_name = ? "
+                    + "ORDER BY created_at DESC LIMIT 1)";
 
             ps = con.prepareStatement(sql);
             ps.setDouble(1, paidAmount);
@@ -60,17 +65,11 @@ public class SavePaymentServlet extends HttpServlet {
             response.sendRedirect("Payment.jsp?error=exception");
         } finally {
             try {
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (Exception e) {
-            }
+                if (ps != null) ps.close();
+            } catch (Exception e) { }
             try {
-                if (con != null) {
-                    con.close();
-                }
-            } catch (Exception e) {
-            }
+                if (con != null) con.close();
+            } catch (Exception e) { }
         }
     }
 }
