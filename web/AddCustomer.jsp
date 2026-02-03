@@ -9,22 +9,53 @@
             body {
                 background-color: #fff8f0;
                 font-family: 'Segoe UI', sans-serif;
+                
             }
             .container {
-                margin-top: 30px;
-                max-width: 700px;
-                background: #ffffff;
-                padding: 30px;
-                border-radius: 15px;
-                box-shadow: 0 0 10px rgba(0,0,0,0.15);
-            }
-            h2 {
-                color: #DC143C;
-            }
+        max-width: 500px;
+        background: white; /* subtle red gradient */
+        padding: 40px;
+        border-radius: 15px;
+        /*box-shadow: 0 8px 20px rgba(220, 20, 60, 0.3);  red tinted shadow */
+        border: 2px solid #DC143C; /* crimson border */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(220, 20, 60, 0.5);
+    }
+    h2 {
+        color: #DC143C;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px #ffccd5;
+    }
+/*    input.form-control {
+        border: 1px solid #DC143C;
+        transition: 0.3s;
+    }
+    input.form-control:focus {
+        border-color: #FF1493;  deeper pink/red on focus 
+        box-shadow: 0 0 8px rgba(255, 20, 147, 0.3);
+        outline: none;
+    }
+    label {
+        font-weight: 600;
+        color: #B22222;  firebrick labels 
+    }*/
+    .btn-danger {
+        background-color: #DC143C;
+        border-color: #B22222;
+        transition: 0.3s;
+    }
+    .btn-danger:hover {
+        background-color: #FF1493;
+        border-color: #DC143C;
+    }
         </style>
     </head>
     <body>
-        <%@ include file="AdminHeader.jsp" %>
+        <%--<%@ include file="AdminHeader.jsp" %>--%>
+        <jsp:include page="ADashboard.jsp" />
 
         <%-- Show alert if customer exists --%>
         <% String error = request.getParameter("error");
@@ -40,15 +71,15 @@
         </script>
         <% }%>
 
-        <!-- Back Button -->
+<!--         Back Button 
         <div class="text-start ms-4 mt-4">
             <a href="AdminDashboard.jsp" class="btn btn-danger d-inline-flex align-items-center" style="margin-left:1200px;">
                 <i class="bi bi-arrow-left me-2"></i> Back 
             </a>
-        </div>
+        </div>-->
 
         <!-- Form -->
-        <div class="container">
+        <div class="container" style="margin-left:400px;width:800px;margin-top:50px;padding:50px;">
             <h2 class="text-center mb-4">Add New Customer</h2>
             <form name="customerForm" action="AddCustomerServlet" method="post" onsubmit="return validateForm()">
                 <div class="row g-3">

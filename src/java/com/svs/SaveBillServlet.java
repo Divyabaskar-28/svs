@@ -64,7 +64,19 @@ public class SaveBillServlet extends HttpServlet {
             }
             ps2.executeBatch();
 
-            response.sendRedirect("AdminDashboard.jsp");
+            response.setContentType("text/html;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<script>");
+            out.println("alert('Bill generated successfully');");
+            out.println("window.location.href='GenerateBill.jsp';");
+            out.println("</script>");
+            out.println("</head>");
+            out.println("<body></body>");
+            out.println("</html>");
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -84,7 +84,15 @@ public class AddCustomerServlet extends HttpServlet {
             int rows = insertStmt.executeUpdate();
 
             if (rows > 0) {
-                response.sendRedirect("AdminDashboard.jsp");
+
+                response.setContentType("text/html");
+                java.io.PrintWriter out = response.getWriter();
+
+                out.println("<script type='text/javascript'>");
+                out.println("alert('Customer added successfully!');");
+                out.println("window.location='AdminDashboard.jsp';");
+                out.println("</script>");
+
             } else {
                 response.sendRedirect("AddCustomer.jsp?error=insert_failed");
             }

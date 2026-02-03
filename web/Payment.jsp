@@ -16,10 +16,11 @@
                 padding: 40px;
             }
             .container {
-                max-width: 600px;
+                /*max-width: 600px;*/
+                width:400px;
                 margin: auto;
                 background: #fff;
-                padding: 30px;
+                padding: 35px;
                 border-radius: 15px;
                 box-shadow: 0 0 10px rgba(0,0,0,0.1);
             }
@@ -32,14 +33,11 @@
     </head>
     <body>
 
-        <%@ include file="AdminHeader.jsp" %>
-        <div class="mb-3">
-            <a href="AdminDashboard.jsp" class="btn btn-danger" style="margin-left:1160px">
-                <i class="bi bi-arrow-left"></i> Back 
-            </a>
-        </div>
+        <jsp:include page="ADashboard.jsp" />
+        
 
-        <div class="container">
+        <div class="container" style="width:600px; margin-left:475px;border: 2px solid #DC143C; /* crimson border */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;">
             <h2>Customer Payment</h2>
             <form action="SavePaymentServlet" method="post" onsubmit="return validateForm()">
                 <div class="mb-3">

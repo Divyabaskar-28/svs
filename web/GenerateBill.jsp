@@ -83,17 +83,21 @@
                     border: 1px solid #000;
                 }
             }
+            .main-content {
+                margin-left: 250px;   /* width of dashboard sidebar */
+                padding: 20px;
+            }
         </style>
     </head>
     <body>
-        <%@ include file="AdminHeader.jsp" %>
-        <div class="text-start ms-4 mt-4 no-print">
-            <a href="AdminDashboard.jsp" class="btn btn-danger d-inline-flex align-items-center" style="margin-left:1220px;">
-                <i class="bi bi-arrow-left me-2"></i> Back
-            </a>
+         <jsp:include page="ADashboard.jsp" />
+
+           <div class="text-start ms-4 mt-4 no-print">
+            
         </div>
 
-        <div class="bill-container" id="printArea">
+        <div class="bill-container" id="printArea" style="margin-left:550px;border: 2px solid #DC143C; /* crimson border */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;margin-top:30px;">
             <h5 class="text-center text-danger"></h5>
             <div class="mb-2 d-flex justify-content-between">
                 <div>

@@ -1,6 +1,7 @@
 package DBConnection;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -34,7 +35,7 @@ public class SavePaymentServlet extends HttpServlet {
             con = DBConnection.getConnection();
 
             // ============================
-            // Use a subquery to update the latest row (works in both MySQL and PostgreSQL)
+            // Update the latest row for this customer
             // ============================
             String sql = "UPDATE bills SET "
                     + "paid_amount = ?, return_amount = ?, balance = ?, "
@@ -54,22 +55,33 @@ public class SavePaymentServlet extends HttpServlet {
 
             int rows = ps.executeUpdate();
 
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+
             if (rows > 0) {
-                response.sendRedirect("AdminDashboard.jsp?success=true");
+                // ✅ Success alert + redirect
+                out.println("<script type='text/javascript'>");
+                out.println("alert('Payment submitted successfully!');");
+                out.println("window.location.href = 'GenerateBill.jsp';"); // redirect
+                out.println("</script>");
             } else {
-                response.sendRedirect("Payment.jsp?error=not_found");
+                out.println("<script type='text/javascript'>");
+                out.println("alert('Payment record not found!');");
+                out.println("window.location.href = 'Payment.jsp';"); 
+                out.println("</script>");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("Payment.jsp?error=exception");
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+            out.println("<script type='text/javascript'>");
+            out.println("alert('Exception occurred!');");
+            out.println("window.location.href = 'Payment.jsp';"); 
+            out.println("</script>");
         } finally {
-            try {
-                if (ps != null) ps.close();
-            } catch (Exception e) { }
-            try {
-                if (con != null) con.close();
-            } catch (Exception e) { }
+            try { if (ps != null) ps.close(); } catch (Exception e) { }
+            try { if (con != null) con.close(); } catch (Exception e) { }
         }
     }
 }

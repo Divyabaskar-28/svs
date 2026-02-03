@@ -24,7 +24,7 @@ public class DBConnection {
             password = "qQJbW7HKaALzEbq56aF55Pd9gIEdQDmG";
         } else {
             // ===== Local MySQL (XAMPP) =====
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("com.mysql.jdbc.Driver");
             
             url = "jdbc:mysql://localhost:3306/svs";
             username = "root";
