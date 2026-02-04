@@ -1,4 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    HttpSession session1 = request.getSession(false);
+    if(session1 == null || session1.getAttribute("admin_username") == null){
+        response.sendRedirect("Login.jsp");
+        return;
+    }
+
+    String adminName = session1.getAttribute("admin_username").toString();
+%>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -64,9 +74,15 @@ body{
 
 <body>
     <jsp:include page="ADashboard.jsp" />
+   
+
 <!-- ⚪ MAIN -->
 <div class="main-content">
     <div class="page-title">Admin Dashboard</div>
+     <div style="text-align:center; margin-bottom:20px;">
+    <i class="bi bi-person-circle" style="font-size:26px;"></i><br>
+    <strong><%= adminName %></strong>
+</div>
 
     <div class="row g-4">
         <div class="col-md-4">

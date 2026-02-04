@@ -1,4 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    HttpSession session1 = request.getSession(false);
+    if(session1 == null || session1.getAttribute("admin_username") == null){
+        response.sendRedirect("Login.jsp");
+        return;
+    }
+
+    String adminName = session1.getAttribute("admin_username").toString();
+%>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -130,9 +140,10 @@ body{
     <a href="AddCustomer.jsp"><i class="bi bi-person-plus-fill"></i> Add Customer</a>
     <a href="CustomerDetails.jsp"><i class="bi bi-person-lines-fill"></i> Customer Details</a>
     <a href="GenerateBill.jsp"><i class="bi bi-receipt"></i> Generate Bill</a>
+     <a href="History.jsp"><i class="bi bi-clock-history"></i> Bill History</a>
     <a href="Payment.jsp"><i class="bi bi-credit-card-2-front-fill"></i> Payment</a>
     <a href="PaymentHistory.jsp"><i class="bi bi-cash-stack"></i> Payment History</a>
-    <a href="History.jsp"><i class="bi bi-clock-history"></i> Bill History</a>
+   
     <a href="Homepage.jsp"><i class="bi bi-box-arrow-right"></i> Logout</a>
 </div>
 

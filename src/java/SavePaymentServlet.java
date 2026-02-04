@@ -1,4 +1,5 @@
-package DBConnection;
+
+import DBConnection.DBConnection;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,74 +15,109 @@ public class SavePaymentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Get session and paid_by from session
-        HttpSession session = request.getSession(false);
-        String paidBy = (session != null && session.getAttribute("admin_username") != null)
-                ? (String) session.getAttribute("admin_username")
-                : "Unknown";
-
-        String customerName = request.getParameter("customer_name");
-        double paidAmount = Double.parseDouble(request.getParameter("paid_amount"));
-        double returnAmount = Double.parseDouble(request.getParameter("return_amount"));
-        double balance = Double.parseDouble(request.getParameter("balance"));
-        String paymentMode = request.getParameter("payment_mode");
-        String returnTime = request.getParameter("return_time"); // may be null
-
         Connection con = null;
-        PreparedStatement ps = null;
+        PreparedStatement psInsert = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psGet = null;
+        ResultSet rs = null;
 
         try {
-            // ✅ Dynamic DB connection (local MySQL or Render PostgreSQL)
+            HttpSession session = request.getSession(); // 🔥 FIX HERE
+
+            String paidBy = "Unknown";
+            if (session.getAttribute("admin_username") != null) {
+                paidBy = session.getAttribute("admin_username").toString();
+            }
+
+            String customerName = request.getParameter("customer_name");
+            double paidAmount = Double.parseDouble(request.getParameter("paid_amount"));
+            double returnAmount = Double.parseDouble(request.getParameter("return_amount"));
+            String paymentMode = request.getParameter("payment_mode");
+
             con = DBConnection.getConnection();
 
-            // ============================
-            // Update the latest row for this customer
-            // ============================
-            String sql = "UPDATE bills SET "
-                    + "paid_amount = ?, return_amount = ?, balance = ?, "
-                    + "payment_mode = ?, payment_time = CURRENT_TIMESTAMP, "
-                    + "return_time = ?, paid_by = ? "
-                    + "WHERE id = (SELECT id FROM bills WHERE customer_name = ? "
-                    + "ORDER BY created_at DESC LIMIT 1)";
+            // 🔴 1️⃣ Get latest invoice & current balance
+            String getSql
+                    = "SELECT invoice_no, balance FROM bills "
+                    + "WHERE customer_name=? ORDER BY created_at DESC LIMIT 1";
 
-            ps = con.prepareStatement(sql);
-            ps.setDouble(1, paidAmount);
-            ps.setDouble(2, returnAmount);
-            ps.setDouble(3, balance);
-            ps.setString(4, paymentMode);
-            ps.setString(5, (returnTime != null && !returnTime.isEmpty()) ? returnTime : null);
-            ps.setString(6, paidBy);
-            ps.setString(7, customerName);
+            psGet = con.prepareStatement(getSql);
+            psGet.setString(1, customerName);
+            rs = psGet.executeQuery();
 
-            int rows = ps.executeUpdate();
-
-            response.setContentType("text/html");
-            PrintWriter out = response.getWriter();
-
-            if (rows > 0) {
-                // ✅ Success alert + redirect
-                out.println("<script type='text/javascript'>");
-                out.println("alert('Payment submitted successfully!');");
-                out.println("window.location.href = 'GenerateBill.jsp';"); // redirect
-                out.println("</script>");
-            } else {
-                out.println("<script type='text/javascript'>");
-                out.println("alert('Payment record not found!');");
-                out.println("window.location.href = 'Payment.jsp';"); 
-                out.println("</script>");
+            if (!rs.next()) {
+                response.sendRedirect("Payment.jsp?status=notfound");
+                return;
             }
+
+            String invoiceNo = rs.getString("invoice_no");
+            double oldBalance = rs.getDouble("balance");
+
+            // 🔴 2️⃣ Calculate new balance
+            double newBalance = oldBalance - paidAmount - returnAmount;
+
+            // 🔴 3️⃣ INSERT payment history (IMPORTANT)
+            String insertSql
+                    = "INSERT INTO payment_history "
+                    + "(invoice_no, customer_name, paid_amount, return_amount, balance_after, "
+                    + "payment_mode, paid_by, payment_time) "
+                    + "VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP)";
+
+            psInsert = con.prepareStatement(insertSql);
+            psInsert.setString(1, invoiceNo);
+            psInsert.setString(2, customerName);
+            psInsert.setDouble(3, paidAmount);
+            psInsert.setDouble(4, returnAmount);
+            psInsert.setDouble(5, newBalance);
+            psInsert.setString(6, paymentMode);
+            psInsert.setString(7, paidBy);
+            psInsert.executeUpdate();
+
+            // 🔴 4️⃣ UPDATE bills (ONLY balance)
+            String updateSql
+                    = "UPDATE bills SET balance=?, payment_time=CURRENT_TIMESTAMP WHERE invoice_no=?";
+
+            psUpdate = con.prepareStatement(updateSql);
+            psUpdate.setDouble(1, newBalance);
+            psUpdate.setString(2, invoiceNo);
+            psUpdate.executeUpdate();
+
+            response.sendRedirect("Payment.jsp?status=success");
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.setContentType("text/html");
-            PrintWriter out = response.getWriter();
-            out.println("<script type='text/javascript'>");
-            out.println("alert('Exception occurred!');");
-            out.println("window.location.href = 'Payment.jsp';"); 
-            out.println("</script>");
+            response.sendRedirect("Payment.jsp?status=error");
         } finally {
-            try { if (ps != null) ps.close(); } catch (Exception e) { }
-            try { if (con != null) con.close(); } catch (Exception e) { }
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (psGet != null) {
+                    psGet.close();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (psInsert != null) {
+                    psInsert.close();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (psUpdate != null) {
+                    psUpdate.close();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (Exception e) {
+            }
         }
     }
 }

@@ -2,6 +2,14 @@
 <%@ page import="DBConnection.DBConnection" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    HttpSession session1 = request.getSession(false);
+    if(session1 == null || session1.getAttribute("admin_username") == null){
+        response.sendRedirect("Login.jsp");
+        return;
+    }
+%>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -34,10 +42,26 @@
     <body>
 
         <jsp:include page="ADashboard.jsp" />
-        
+        <%
+            String status = request.getParameter("status");
+            if ("success".equals(status)) {
+        %>
+        <script>alert("Payment submitted successfully!");</script>
+        <%
+        } else if ("error".equals(status)) {
+        %>
+        <script>alert("Something went wrong!");</script>
+        <%
+        } else if ("notfound".equals(status)) {
+        %>
+        <script>alert("No payment record found!");</script>
+        <%
+            }
+        %>
+
 
         <div class="container" style="width:600px; margin-left:475px;border: 2px solid #DC143C; /* crimson border */
-        transition: transform 0.3s ease, box-shadow 0.3s ease;">
+             transition: transform 0.3s ease, box-shadow 0.3s ease;">
             <h2>Customer Payment</h2>
             <form action="SavePaymentServlet" method="post" onsubmit="return validateForm()">
                 <div class="mb-3">
@@ -45,17 +69,17 @@
                     <select name="customer_name" id="customerSelect" class="form-select" onchange="fetchTotalAmount()" required>
                         <option value="">-- Select Customer --</option>
                         <%
-    try {
-        Connection con = DBConnection.getConnection();
-        Statement st = con.createStatement();
-        ResultSet rs = st.executeQuery(
-            "SELECT DISTINCT customer_name FROM bills"
-        );
+                            try {
+                                Connection con = DBConnection.getConnection();
+                                Statement st = con.createStatement();
+                                ResultSet rs = st.executeQuery(
+                                        "SELECT DISTINCT customer_name FROM bills"
+                                );
 
-        while (rs.next()) {
+                                while (rs.next()) {
                         %>
-                        <option value="<%= rs.getString("customer_name") %>">
-                            <%= rs.getString("customer_name") %>
+                        <option value="<%= rs.getString("customer_name")%>">
+                            <%= rs.getString("customer_name")%>
                         </option>
                         <%
                                 }
@@ -71,8 +95,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label>Total Amount</label>
-                    <input type="number" step="0.01" name="total_amount" id="totalAmount" class="form-control" readonly>
+                    <label>Total Outstanding</label>
+                    <input type="number" id="totalOutstanding"
+                           class="form-control" readonly>
+
                 </div>
 
                 <div class="mb-3">
@@ -113,35 +139,28 @@
                 if (!customer)
                     return;
 
-                fetch("GetTotalAmount.jsp?customer=" + encodeURIComponent(customer))
-                        .then(response => response.json())
+                fetch("GetOutstanding.jsp?customer=" + encodeURIComponent(customer))
+                        .then(res => res.json())
                         .then(data => {
-                            document.getElementById("totalAmount").value = data.total || 0;
+                            document.getElementById("totalOutstanding").value =
+                                    data.total_due || 0;
                             calculateBalance();
                         });
             }
 
-            function calculateBalance() {
-                const total = parseFloat(document.getElementById("totalAmount").value) || 0;
-                const paid = parseFloat(document.getElementById("paidAmount").value) || 0;
-                const ret = parseFloat(document.getElementById("returnAmount").value) || 0;
-                const balance = total - paid - ret;
-                document.getElementById("balance").value = balance.toFixed(2); // stored in hidden field
 
-                // Set return time only if return amount is greater than 0
-                if (ret > 0) {
-                    const now = new Date();
-                    const formatted = now.getFullYear() + '-' +
-                            String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                            String(now.getDate()).padStart(2, '0') + ' ' +
-                            String(now.getHours()).padStart(2, '0') + ':' +
-                            String(now.getMinutes()).padStart(2, '0') + ':' +
-                            String(now.getSeconds()).padStart(2, '0');
-                    document.getElementById("returnTime").value = formatted;
-                } else {
-                    document.getElementById("returnTime").value = "";
-                }
+            function calculateBalance() {
+                const outstanding =
+                        parseFloat(document.getElementById("totalOutstanding").value) || 0;
+                const paid =
+                        parseFloat(document.getElementById("paidAmount").value) || 0;
+                const ret =
+                        parseFloat(document.getElementById("returnAmount").value) || 0;
+
+                const newBalance = outstanding - paid - ret;
+                document.getElementById("balance").value = newBalance.toFixed(2);
             }
+
 
 
 
