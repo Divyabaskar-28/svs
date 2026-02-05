@@ -4,7 +4,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
     HttpSession session1 = request.getSession(false);
-    if(session1 == null || session1.getAttribute("admin_username") == null){
+    if (session1 == null || session1.getAttribute("admin_username") == null) {
         response.sendRedirect("Login.jsp");
         return;
     }
@@ -143,23 +143,30 @@
                         .then(res => res.json())
                         .then(data => {
                             document.getElementById("totalOutstanding").value =
-                                    data.total_due || 0;
+                                    data.balance || 0;
+
                             calculateBalance();
                         });
             }
 
 
-            function calculateBalance() {
-                const outstanding =
-                        parseFloat(document.getElementById("totalOutstanding").value) || 0;
-                const paid =
-                        parseFloat(document.getElementById("paidAmount").value) || 0;
-                const ret =
-                        parseFloat(document.getElementById("returnAmount").value) || 0;
+           function calculateBalance() {
+    const outstanding =
+        parseFloat(document.getElementById("totalOutstanding").value) || 0;
+    const paid =
+        parseFloat(document.getElementById("paidAmount").value) || 0;
+    const ret =
+        parseFloat(document.getElementById("returnAmount").value) || 0;
 
-                const newBalance = outstanding - paid - ret;
-                document.getElementById("balance").value = newBalance.toFixed(2);
-            }
+    const deducted = paid + ret;
+    let newBalance = outstanding - deducted;
+
+    if (newBalance < 0) {
+        newBalance = 0;
+    }
+
+    document.getElementById("balance").value = newBalance.toFixed(2);
+}
 
 
 

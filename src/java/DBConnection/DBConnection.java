@@ -7,7 +7,7 @@ public class DBConnection {
 
     // true → use online PostgreSQL (Render)
     // false → use local MySQL
-    private static final boolean USE_ONLINE_DB = true;
+    private static final boolean USE_ONLINE_DB = false;
 
     public static Connection getConnection() throws Exception {
         String url;

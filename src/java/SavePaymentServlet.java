@@ -1,13 +1,9 @@
-
 import DBConnection.DBConnection;
-
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
-import DBConnection.DBConnection;   // ✅ import your DBConnection class
 
 @WebServlet("/SavePaymentServlet")
 public class SavePaymentServlet extends HttpServlet {
@@ -16,14 +12,13 @@ public class SavePaymentServlet extends HttpServlet {
             throws ServletException, IOException {
 
         Connection con = null;
+        PreparedStatement psLatest = null;
         PreparedStatement psInsert = null;
         PreparedStatement psUpdate = null;
-        PreparedStatement psGet = null;
-        ResultSet rs = null;
+        ResultSet rsLatest = null;
 
         try {
-            HttpSession session = request.getSession(); // 🔥 FIX HERE
-
+            HttpSession session = request.getSession();
             String paidBy = "Unknown";
             if (session.getAttribute("admin_username") != null) {
                 paidBy = session.getAttribute("admin_username").toString();
@@ -36,33 +31,30 @@ public class SavePaymentServlet extends HttpServlet {
 
             con = DBConnection.getConnection();
 
-            // 🔴 1️⃣ Get latest invoice & current balance
-            String getSql
-                    = "SELECT invoice_no, balance FROM bills "
-                    + "WHERE customer_name=? ORDER BY created_at DESC LIMIT 1";
+            // 🔹 1️⃣ Get latest bill for this customer
+            String latestSql = "SELECT invoice_no, balance FROM bills " +
+                               "WHERE customer_name=? ORDER BY created_at DESC LIMIT 1";
+            psLatest = con.prepareStatement(latestSql);
+            psLatest.setString(1, customerName);
+            rsLatest = psLatest.executeQuery();
 
-            psGet = con.prepareStatement(getSql);
-            psGet.setString(1, customerName);
-            rs = psGet.executeQuery();
-
-            if (!rs.next()) {
+            if (!rsLatest.next()) {
                 response.sendRedirect("Payment.jsp?status=notfound");
                 return;
             }
 
-            String invoiceNo = rs.getString("invoice_no");
-            double oldBalance = rs.getDouble("balance");
+            String invoiceNo = rsLatest.getString("invoice_no");
+            double currentBalance = rsLatest.getDouble("balance");
 
-            // 🔴 2️⃣ Calculate new balance
-            double newBalance = oldBalance - paidAmount - returnAmount;
+            // 🔹 2️⃣ Calculate new balance
+            double newBalance = currentBalance - (paidAmount + returnAmount);
+            if (newBalance < 0) newBalance = 0;
 
-            // 🔴 3️⃣ INSERT payment history (IMPORTANT)
-            String insertSql
-                    = "INSERT INTO payment_history "
-                    + "(invoice_no, customer_name, paid_amount, return_amount, balance_after, "
-                    + "payment_mode, paid_by, payment_time) "
-                    + "VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP)";
-
+            // 🔹 3️⃣ Insert into payment_history
+            String insertSql = "INSERT INTO payment_history " +
+                               "(invoice_no, customer_name, paid_amount, return_amount, balance_after, " +
+                               "payment_mode, paid_by, payment_time) " +
+                               "VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP)";
             psInsert = con.prepareStatement(insertSql);
             psInsert.setString(1, invoiceNo);
             psInsert.setString(2, customerName);
@@ -73,13 +65,17 @@ public class SavePaymentServlet extends HttpServlet {
             psInsert.setString(7, paidBy);
             psInsert.executeUpdate();
 
-            // 🔴 4️⃣ UPDATE bills (ONLY balance)
-            String updateSql
-                    = "UPDATE bills SET balance=?, payment_time=CURRENT_TIMESTAMP WHERE invoice_no=?";
-
+            // 🔹 4️⃣ Update latest bill balance
+            String updateSql = "UPDATE bills SET balance=?, paid_amount=?, return_amount=?, " +
+                               "payment_mode=?, paid_by=?, payment_time=CURRENT_TIMESTAMP " +
+                               "WHERE invoice_no=?";
             psUpdate = con.prepareStatement(updateSql);
             psUpdate.setDouble(1, newBalance);
-            psUpdate.setString(2, invoiceNo);
+            psUpdate.setDouble(2, paidAmount);
+            psUpdate.setDouble(3, returnAmount);
+            psUpdate.setString(4, paymentMode);
+            psUpdate.setString(5, paidBy);
+            psUpdate.setString(6, invoiceNo);
             psUpdate.executeUpdate();
 
             response.sendRedirect("Payment.jsp?status=success");
@@ -88,36 +84,11 @@ public class SavePaymentServlet extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect("Payment.jsp?status=error");
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (psGet != null) {
-                    psGet.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (psInsert != null) {
-                    psInsert.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (psUpdate != null) {
-                    psUpdate.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            } catch (Exception e) {
-            }
+            try { if (rsLatest != null) rsLatest.close(); } catch (Exception e) {}
+            try { if (psLatest != null) psLatest.close(); } catch (Exception e) {}
+            try { if (psInsert != null) psInsert.close(); } catch (Exception e) {}
+            try { if (psUpdate != null) psUpdate.close(); } catch (Exception e) {}
+            try { if (con != null) con.close(); } catch (Exception e) {}
         }
     }
 }
