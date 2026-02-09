@@ -1,13 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
     HttpSession session1 = request.getSession(false);
-    if (session1 == null || session1.getAttribute("admin_username") == null) {
+    if (session1 == null || session1.getAttribute("role") == null) {
         response.sendRedirect("Login.jsp");
         return;
     }
 
-    String adminName = session1.getAttribute("admin_username").toString();
+    String role = session1.getAttribute("role").toString();
 %>
+
 
 <!DOCTYPE html>
 <html>
@@ -137,19 +138,25 @@
 
             <a href="AdminDashboard.jsp"><i class="bi bi-speedometer2"></i> Dashboard</a>
             <%
-                if ("Shanmu".equalsIgnoreCase(adminName) || "Divya".equalsIgnoreCase(adminName)) {
+                if ("Admin".equalsIgnoreCase(role)) {
             %>
             <a href="AddAdmin.jsp">
-                <i class="bi bi-person-badge-fill"></i> Add Admin
+                <i class="bi bi-person-badge-fill"></i> Add Workers
+            </a>
+
+            <a href="ViewWorkers.jsp">
+                <i class="bi bi-people-fill"></i> View Workers
             </a>
             <%
                 }
             %>
 
+
+
             <a href="AddCustomer.jsp"><i class="bi bi-person-plus-fill"></i> Add Customer</a>
             <a href="CustomerDetails.jsp"><i class="bi bi-person-lines-fill"></i> Customer Details</a>
-            <a href="GenerateBill.jsp"><i class="bi bi-receipt"></i> Generate Bill</a>
-            <a href="History.jsp"><i class="bi bi-clock-history"></i> Bill History</a>
+            <a href="GenerateBill.jsp"><i class="bi bi-receipt"></i> Generate Hand Bill</a>
+            <a href="History.jsp"><i class="bi bi-clock-history"></i> Hand Bill History</a>
             <a href="Payment.jsp"><i class="bi bi-credit-card-2-front-fill"></i> Payment</a>
             <a href="PaymentHistory.jsp"><i class="bi bi-cash-stack"></i> Payment History</a>
 

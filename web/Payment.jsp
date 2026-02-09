@@ -150,23 +150,18 @@
             }
 
 
-           function calculateBalance() {
-    const outstanding =
-        parseFloat(document.getElementById("totalOutstanding").value) || 0;
-    const paid =
-        parseFloat(document.getElementById("paidAmount").value) || 0;
-    const ret =
-        parseFloat(document.getElementById("returnAmount").value) || 0;
+            function calculateBalance() {
+                const outstanding =
+                        parseFloat(document.getElementById("totalOutstanding").value) || 0;
+                const paid =
+                        parseFloat(document.getElementById("paidAmount").value) || 0;
+                const ret =
+                        parseFloat(document.getElementById("returnAmount").value) || 0;
 
-    const deducted = paid + ret;
-    let newBalance = outstanding - deducted;
+                let newBalance = outstanding - paid - ret;
 
-    if (newBalance < 0) {
-        newBalance = 0;
-    }
-
-    document.getElementById("balance").value = newBalance.toFixed(2);
-}
+                document.getElementById("balance").value = newBalance.toFixed(2);
+            }
 
 
 

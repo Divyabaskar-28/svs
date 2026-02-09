@@ -74,8 +74,8 @@
             <!-- 🔍 Search -->
             <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search customer...">
 
-            <table class="table table-bordered table-hover table-striped" id="customerTable">
-                <thead>
+            <table class="table table-bordered table-striped text-center align-middle" id="customerTable">
+                <thead class="table-danger">
                     <tr>
                         <th>#</th>
                         <th>Name</th>

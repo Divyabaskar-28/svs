@@ -1,71 +1,49 @@
-
 import java.io.IOException;
 import java.sql.*;
 import javax.servlet.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
-import DBConnection.DBConnection;   // ✅ import DBConnection
+import DBConnection.DBConnection;
 
 @WebServlet("/AdminLoginServlet")
 public class AdminLoginServlet extends HttpServlet {
 
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String uname = request.getParameter("username");
         String pass = request.getParameter("password");
 
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                 "SELECT username, role FROM admin_login WHERE username=? AND password=?"
+             )) {
 
-        try {
-            // ✅ Dynamic DB connection
-            con = DBConnection.getConnection();
-
-            ps = con.prepareStatement(
-                    "SELECT * FROM admin_login WHERE username=? AND password=?"
-            );
             ps.setString(1, uname);
             ps.setString(2, pass);
 
-            rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) {
-                // ✅ Login success → create session
-                HttpSession session = request.getSession();
-                session.setAttribute("admin_username", rs.getString("username"));
+                if (rs.next()) {
+                    // ✅ Login success
+                    HttpSession session = request.getSession(true);
 
-                response.sendRedirect("AdminDashboard.jsp");
-            } else {
-                response.setContentType("text/html");
-                response.getWriter().println(
+                    session.setAttribute("admin_username", rs.getString("username"));
+                    session.setAttribute("role", rs.getString("role")); // 🔥 IMPORTANT
+
+                    response.sendRedirect("AdminDashboard.jsp");
+                } else {
+                    response.setContentType("text/html");
+                    response.getWriter().println(
                         "<script>alert('Invalid Username or Password!'); location='Login.jsp';</script>"
-                );
+                    );
+                }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             response.getWriter().println("Error: " + e.getMessage());
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            } catch (Exception e) {
-            }
         }
     }
 }

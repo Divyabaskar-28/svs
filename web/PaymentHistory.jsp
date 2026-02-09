@@ -74,9 +74,9 @@
 
                     <!-- 📋 TABLE -->
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover"
+                        <table class="table table-bordered table-striped text-center align-middle"
                                id="paymentTable">
-                            <thead class="table-secondary">
+                            <thead class="table-danger">
                                 <tr>
                                     <th>#</th>
                                     <th>Customer Name</th>

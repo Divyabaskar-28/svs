@@ -19,7 +19,7 @@
             }
 
             .bill-container {
-                max-width: 480px;
+                max-width: 520px;
                 width: 100%;
                 margin: auto;
                 background: white;
@@ -90,14 +90,14 @@
         </style>
     </head>
     <body>
-         <jsp:include page="ADashboard.jsp" />
+        <jsp:include page="ADashboard.jsp" />
 
-           <div class="text-start ms-4 mt-4 no-print">
-            
+        <div class="text-start ms-4 mt-4 no-print">
+
         </div>
 
-        <div class="bill-container" id="printArea" style="margin-left:550px;border: 2px solid #DC143C; /* crimson border */
-        transition: transform 0.3s ease, box-shadow 0.3s ease;margin-top:30px;">
+        <div class="bill-container" id="printArea" style="margin-left:530px;border: 2px solid #DC143C; /* crimson border */
+             transition: transform 0.3s ease, box-shadow 0.3s ease;margin-top:30px;">
             <h5 class="text-center text-danger"></h5>
             <div class="mb-2 d-flex justify-content-between">
                 <div>
@@ -169,7 +169,9 @@
                     </tr>
                     <tr class="total-row">
                         <td colspan="3">Balance</td>
-                        <td colspan="3"><input type="number" id="balance" class="form-control" value="0" onchange="calculateTotal()"></td>
+                        <td colspan="3"><input type="number" id="balance" class="form-control" value="0" readonly>
+                        </td>
+                        <!--<td colspan="3"><input type="number" id="balance" class="form-control" value="0" onchange="calculateTotal()"></td>-->
                     </tr>
                     <tr class="total-row">
                         <td colspan="3">Total Amount</td>
