@@ -19,7 +19,7 @@
             }
 
             .bill-container {
-                max-width: 520px;
+                max-width: 590px;
                 width: 100%;
                 margin: auto;
                 background: white;
@@ -96,7 +96,7 @@
 
         </div>
 
-        <div class="bill-container" id="printArea" style="margin-left:530px;border: 2px solid #DC143C; /* crimson border */
+        <div class="bill-container" id="printArea" style="margin-left:500px;border: 2px solid #DC143C; /* crimson border */
              transition: transform 0.3s ease, box-shadow 0.3s ease;margin-top:30px;">
             <h5 class="text-center text-danger"></h5>
             <div class="mb-2 d-flex justify-content-between">

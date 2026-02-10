@@ -1,3 +1,4 @@
+
 import DBConnection.DBConnection;
 
 import com.itextpdf.text.*;
@@ -6,6 +7,7 @@ import com.itextpdf.text.pdf.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -18,91 +20,132 @@ public class PaymentHistoryPDFServlet extends HttpServlet {
 
         int paymentId = Integer.parseInt(request.getParameter("payment_id"));
 
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(
+                        "SELECT ph.*, c.organisation, c.place, c.state, c.mobile "
+                        + "FROM payment_history ph "
+                        + "LEFT JOIN customers c ON ph.customer_name = c.name "
+                        + "WHERE ph.payment_id=?"
+                )) {
 
-        try {
-            con = DBConnection.getConnection();
-            ps = con.prepareStatement(
-                "SELECT * FROM payment_history WHERE payment_id=?"
-            );
             ps.setInt(1, paymentId);
-            rs = ps.executeQuery();
+            ResultSet rs = ps.executeQuery();
 
             if (!rs.next()) {
                 response.getWriter().println("Payment not found");
                 return;
             }
 
-            // 📄 PDF response
+            // ===== PDF RESPONSE =====
             response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition",
-                    "attachment; filename=Payment_" + paymentId + ".pdf");
+            response.setHeader(
+                    "Content-Disposition",
+                    "attachment; filename=PaymentReceipt_" + paymentId + ".pdf"
+            );
 
-            Document document = new Document(PageSize.A4);
+            Document document = new Document(PageSize.A4, 36, 36, 36, 36);
             PdfWriter.getInstance(document, response.getOutputStream());
             document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
-            Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
-            Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 11);
+            // ===== FONTS =====
+            Font titleFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
+            Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+            Font normalFont = new Font(Font.FontFamily.HELVETICA, 10);
 
-            // 🧾 Title
-            Paragraph title = new Paragraph("Payment Receipt", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
-            document.add(title);
+            // ===== LOGO =====
+            try {
+                String logoPath = getServletContext().getRealPath("/Images/logo.png");
+                File f = new File(logoPath);
+                if (f.exists()) {
+                    Image logo = Image.getInstance(logoPath);
+                    logo.scaleAbsolute(70, 70);
+                    logo.setAlignment(Image.ALIGN_CENTER);
+                    document.add(logo);
+                }
+            } catch (Exception e) {
+                // ignore logo errors
+            }
 
-            // 📋 Table
-            PdfPTable table = new PdfPTable(2);
-            table.setWidthPercentage(100);
-            table.setSpacingBefore(10);
-            table.setWidths(new int[]{3, 5});
+            // ===== COMPANY DETAILS =====
+            Paragraph head = new Paragraph("COTTAGE INDUSTRY\n", titleFont);
+            head.setAlignment(Element.ALIGN_CENTER);
+            document.add(head);
 
-            SimpleDateFormat sdf =
-                new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            Paragraph addr = new Paragraph(
+                    "616/1, Vaikunda Samy Nagar, Eachanari\n"
+                    + "Tamil Nadu 641021\n"
+                    + "GST: 33AHTPT5363M1ZH | Phone: 9442641997\n\n",
+                    normalFont
+            );
+            addr.setAlignment(Element.ALIGN_CENTER);
+            document.add(addr);
 
-            addRow(table, "Customer Name", rs.getString("customer_name"), headFont, bodyFont);
-            addRow(table, "Invoice No", rs.getString("invoice_no"), headFont, bodyFont);
-            addRow(table, "Paid Amount", "₹ " + rs.getDouble("paid_amount"), headFont, bodyFont);
-            addRow(table, "Return Amount", "₹ " + rs.getDouble("return_amount"), headFont, bodyFont);
-            addRow(table, "Balance Amount", "₹ " + rs.getDouble("balance_after"), headFont, bodyFont);
-            addRow(table, "Payment Mode", rs.getString("payment_mode"), headFont, bodyFont);
-            addRow(table, "Paid By", rs.getString("paid_by"), headFont, bodyFont);
-            addRow(table, "Payment Time",
-                    sdf.format(rs.getTimestamp("payment_time")),
-                    headFont, bodyFont);
+            // ===== CUSTOMER + RECEIPT INFO =====
+            PdfPTable info = new PdfPTable(2);
+            info.setWidthPercentage(100);
+            info.setWidths(new int[]{60, 40});
 
-            document.add(table);
+            SimpleDateFormat sdf
+                    = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
-            document.add(new Paragraph("\n\nThank you for your payment!",
-                    FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10)));
+            String receivedFrom
+                    = "Received From:\n"
+                    + rs.getString("customer_name") + "\n"
+                    + rs.getString("organisation") + "\n"
+                    + rs.getString("place") + ", " + rs.getString("state") + "\n"
+                    + "Mobile: " + rs.getString("mobile");
+
+            info.addCell(cell(receivedFrom, normalFont));
+
+            info.addCell(cell(
+                    "PAYMENT RECEIPT\n"
+                    + "Receipt No : " + paymentId + "\n"
+                    + "Invoice No : " + rs.getString("invoice_no") + "\n"
+                    + "Date : " + sdf.format(rs.getTimestamp("payment_time")),
+                    normalFont
+            ));
+
+            document.add(info);
+            document.add(new Paragraph(" "));
+
+            PdfPTable pay = new PdfPTable(2);
+            pay.setWidthPercentage(100);          // full page width
+            pay.setSpacingBefore(10);
+            pay.setWidths(new int[]{60, 40});     // label wider than value
+
+            pay.addCell(cell("Paid Amount", boldFont));
+            pay.addCell(cell("₹ " + rs.getDouble("paid_amount"), normalFont));
+
+            pay.addCell(cell("Return Amount", boldFont));
+            pay.addCell(cell("₹ " + rs.getDouble("return_amount"), normalFont));
+
+            pay.addCell(cell("Balance After", boldFont));
+            pay.addCell(cell("₹ " + rs.getDouble("balance_after"), normalFont));
+
+            pay.addCell(cell("Payment Mode", boldFont));
+            pay.addCell(cell(rs.getString("payment_mode"), normalFont));
+
+            pay.addCell(cell("Paid By", boldFont));
+            pay.addCell(cell(rs.getString("paid_by"), normalFont));
+
+            document.add(pay);
+
+            document.add(new Paragraph(
+                    "\n\nFor SVS COTTAGE INDUSTRY\n\nAuthorised Signatory",
+                    normalFont
+            ));
 
             document.close();
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try { if(rs!=null) rs.close(); } catch(Exception e){}
-            try { if(ps!=null) ps.close(); } catch(Exception e){}
-            try { if(con!=null) con.close(); } catch(Exception e){}
         }
     }
 
-    // 🔹 helper method
-    private void addRow(PdfPTable table,
-                        String label,
-                        String value,
-                        Font head,
-                        Font body) {
-
-        PdfPCell c1 = new PdfPCell(new Phrase(label, head));
-        c1.setPadding(6);
-        table.addCell(c1);
-
-        PdfPCell c2 = new PdfPCell(new Phrase(value, body));
-        c2.setPadding(6);
-        table.addCell(c2);
+    // ===== HELPER CELL =====
+    private PdfPCell cell(String text, Font f) {
+        PdfPCell c = new PdfPCell(new Phrase(text, f));
+        c.setPadding(6);
+        return c;
     }
 }

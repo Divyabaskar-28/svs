@@ -49,9 +49,15 @@ public class SavePaymentServlet extends HttpServlet {
             String invoiceNo = rsLatest.getString("invoice_no");
             double totalAmount = rsLatest.getDouble("total_amount");
 
-            double newBalance = totalAmount - paidAmount - returnAmount;
-// negative allowed 👍
+            double newBalance;
 
+            if (paidAmount == 0.0 && returnAmount == 0.0) {
+                newBalance = totalAmount;
+            } else {
+                newBalance = totalAmount - paidAmount - returnAmount;
+            }
+
+// negative allowed 👍
 // negative allowed 👍
 // ❌ Negative allowed – DO NOT clamp
             // 🔹 3️⃣ Insert into payment_history

@@ -1,10 +1,6 @@
-<%@ page import="java.io.*" %>
-<%@ page import="java.sql.*" %>
-<%@ page import="com.itextpdf.text.*" %>
-<%@ page import="com.itextpdf.text.pdf.*" %>
+<%@ page import="java.io.*,java.sql.*,java.text.SimpleDateFormat" %>
+<%@ page import="com.itextpdf.text.*,com.itextpdf.text.pdf.*" %>
 <%@ page import="DBConnection.DBConnection" %>
-<%@ page import="java.text.SimpleDateFormat" %>
-
 
 <%
     String invoice = request.getParameter("invoice");
@@ -13,86 +9,131 @@
     response.setHeader("Content-Disposition",
             "attachment; filename=Invoice_" + invoice + ".pdf");
 
-    Document document = new Document(PageSize.A4);
+    Document document = new Document(PageSize.A4, 36, 36, 36, 36);
     PdfWriter.getInstance(document, response.getOutputStream());
     document.open();
 
-    Font titleFont = new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD);
-    Font headerFont = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD);
+    /* ================= FONTS ================= */
+    Font titleFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
+    Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
     Font normalFont = new Font(Font.FontFamily.HELVETICA, 10);
 
-    // ? TITLE
-    Paragraph title = new Paragraph("SVS Sweets - Invoice", titleFont);
-    title.setAlignment(Element.ALIGN_CENTER);
-    document.add(title);
-    document.add(new Paragraph(" "));
+    /* ================= LOGO ================= */
+    String logoPath = application.getRealPath("/Images/logo.png");
+    Image logo = Image.getInstance(logoPath);
+    logo.scaleAbsolute(70, 70);
+    logo.setAlignment(Image.ALIGN_CENTER);
+    document.add(logo);
 
+    /* ================= COMPANY NAME ================= */
+    Paragraph head = new Paragraph("COTTAGE INDUSTRY\n", titleFont);
+    head.setAlignment(Element.ALIGN_CENTER);
+    document.add(head);
+
+    Paragraph addr = new Paragraph(
+            "616/1, Vaikunda Samy Nagar, Eachanari\n"
+            + "Tamil Nadu 641021\n"
+            + "GST: 33AHTPT5363M1ZH | Phone: 9442641997\n\n",
+            normalFont);
+    addr.setAlignment(Element.ALIGN_CENTER);
+    document.add(addr);
+
+    /* ================= BILL INFO ================= */
     Connection con = DBConnection.getConnection();
+    PreparedStatement ps = con.prepareStatement(
+            "SELECT b.*, c.organisation, c.place, c.state, c.mobile "
+            + "FROM bills b "
+            + "LEFT JOIN customers c ON b.customer_name = c.name "
+            + "WHERE b.invoice_no=?"
+    );
 
-    // ? BILL DETAILS
-    PreparedStatement billPs
-            = con.prepareStatement("SELECT * FROM bills WHERE invoice_no=?");
-    billPs.setString(1, invoice);
-    ResultSet billRs = billPs.executeQuery();
+    ps.setString(1, invoice);
+    ResultSet rs = ps.executeQuery();
 
-    if (billRs.next()) {
-        document.add(new Paragraph("Invoice No : " + invoice, normalFont));
-        document.add(new Paragraph("Customer   : "
-                + billRs.getString("customer_name"), normalFont));
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    PdfPTable info = new PdfPTable(2);
+    info.setWidthPercentage(100);
+    info.setWidths(new int[]{60, 40});
 
-        java.sql.Date billDate = billRs.getDate("bill_date");
-        String formattedDate = (billDate != null) ? sdf.format(billDate) : "";
+    if (rs.next()) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
 
-        document.add(new Paragraph("Bill Date  : " + formattedDate, normalFont));
+        String billTo
+                = "Bill To:\n"
+                + rs.getString("customer_name") + "\n"
+                + rs.getString("organisation") + "\n"
+                + rs.getString("place") + ", " + rs.getString("state") + "\n"
+                + "Mobile: " + rs.getString("mobile");
 
-        document.add(new Paragraph("Total Amt  :"
-                + billRs.getDouble("total_amount"), normalFont));
+        info.addCell(cell(billTo, normalFont));
+
+        info.addCell(cell("TAX INVOICE\nInvoice No : " + invoice
+                + "\nDate : " + sdf.format(rs.getDate("bill_date")), normalFont));
     }
-
-    document.add(new Paragraph(" "));
-    document.add(new Paragraph("Item Details", headerFont));
+    document.add(info);
     document.add(new Paragraph(" "));
 
-    // ? ITEMS TABLE (WITH S.NO)
-    PdfPTable table = new PdfPTable(5);   // ? 5 columns
+    /* ================= ITEM TABLE ================= */
+    PdfPTable table = new PdfPTable(5);
     table.setWidthPercentage(100);
     table.setWidths(new int[]{1, 4, 2, 2, 2});
 
-    table.addCell(new PdfPCell(new Phrase("S.No", headerFont)));
-    table.addCell(new PdfPCell(new Phrase("Item", headerFont)));
-    table.addCell(new PdfPCell(new Phrase("Qty", headerFont)));
-    table.addCell(new PdfPCell(new Phrase("Price", headerFont)));
-    table.addCell(new PdfPCell(new Phrase("Amount", headerFont)));
+    addHeader(table, "S.No");
+    addHeader(table, "Particulars");
+    addHeader(table, "Qty");
+   
+    addHeader(table, "Rate");
+    addHeader(table, "Amount");
 
-    PreparedStatement itemPs
-            = con.prepareStatement(
-                    "SELECT * FROM bill_items WHERE invoice_no=?");
-    itemPs.setString(1, invoice);
-    ResultSet itemRs = itemPs.executeQuery();
+    PreparedStatement ips = con.prepareStatement(
+            "SELECT * FROM bill_items WHERE invoice_no=?");
+    ips.setString(1, invoice);
+    ResultSet irs = ips.executeQuery();
 
-    int sno = 1;
-    while (itemRs.next()) {
-        table.addCell(new Phrase(String.valueOf(sno++), normalFont));
-        table.addCell(new Phrase(itemRs.getString("item_name"), normalFont));
-        table.addCell(new Phrase(
-                String.valueOf(itemRs.getInt("quantity")), normalFont));
-        table.addCell(new Phrase(
-                "" + itemRs.getDouble("price"), normalFont));
-        table.addCell(new Phrase(
-                "" + itemRs.getDouble("amount"), normalFont));
+    int i = 1;
+    double total = 0;
+
+    while (irs.next()) {
+        table.addCell(cell(String.valueOf(i++), normalFont));
+        table.addCell(cell(irs.getString("item_name"), normalFont));
+        table.addCell(cell(String.valueOf(irs.getInt("quantity")), normalFont));
+
+        table.addCell(cell("" + irs.getDouble("price"), normalFont));
+        table.addCell(cell("" + irs.getDouble("amount"), normalFont));
+        total += irs.getDouble("amount");
     }
-
     document.add(table);
 
+    /* ================= TOTAL ================= */
+    PdfPTable totalTbl = new PdfPTable(2);
+    totalTbl.setWidthPercentage(40);
+    totalTbl.setHorizontalAlignment(Element.ALIGN_RIGHT);
+
+    totalTbl.addCell(cell("Total Amount", boldFont));
+    totalTbl.addCell(cell("" + total, boldFont));
+
     document.add(new Paragraph(" "));
-//    document.add(new Paragraph("Thank you! Visit Again ?", normalFont));
+    document.add(totalTbl);
+
+    document.add(new Paragraph(
+            "\nFor SVS COTTAGE INDUSTRY\n\nAuthorised Signatory",
+            normalFont));
 
     document.close();
-
-    billRs.close();
-    itemRs.close();
-    billPs.close();
-    itemPs.close();
     con.close();
+%>
+
+<%!
+    PdfPCell cell(String text, Font f) {
+        PdfPCell c = new PdfPCell(new Phrase(text, f));
+        c.setPadding(5);
+        return c;
+    }
+
+    void addHeader(PdfPTable t, String s) {
+        PdfPCell c = new PdfPCell(new Phrase(
+                s, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD)));
+        c.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        c.setPadding(5);
+        t.addCell(c);
+    }
 %>

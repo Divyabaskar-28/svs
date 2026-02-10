@@ -108,8 +108,15 @@
 
                 <div class="mb-3">
                     <label>Return Amount</label>
-                    <input type="number" step="0.01" name="return_amount" id="returnAmount" class="form-control" required oninput="calculateBalance()">
+                    <input type="number"
+                           step="0.01"
+                           name="return_amount"
+                           id="returnAmount"
+                           class="form-control"
+                           value="0.00"
+                           oninput="calculateBalance()">
                 </div>
+
 
                 <input type="hidden" name="balance" id="balance">
                 <input type="hidden" name="return_time" id="returnTime">
@@ -120,6 +127,7 @@
                     <label>Payment Mode</label>
                     <select name="payment_mode" class="form-select" required>
                         <option value="">-- Select Mode --</option>
+                        <option value="Product">Product</option>
                         <option value="Cash">Cash</option>
                         <option value="Bank Transfer">Bank Transfer</option>
                         <option value="Net Banking">Net Banking</option>
@@ -158,7 +166,13 @@
                 const ret =
                         parseFloat(document.getElementById("returnAmount").value) || 0;
 
-                let newBalance = outstanding - paid - ret;
+                let newBalance;
+
+                if (paid === 0 && ret === 0) {
+                    newBalance = outstanding;
+                } else {
+                    newBalance = outstanding - paid + ret; // 🔥 CORRECT
+                }
 
                 document.getElementById("balance").value = newBalance.toFixed(2);
             }
