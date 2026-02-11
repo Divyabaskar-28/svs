@@ -62,7 +62,7 @@
                                    placeholder="Search by customer name">
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-3" style="margin-left:250px;">
                             <input type="date" id="dateFilter" class="form-control">
                         </div>
 
@@ -82,8 +82,8 @@
                                     <th>Customer Name</th>
                                     <th>Invoice No</th>
                                     <th>Paid Amount</th>
-                                    <th>Return Amount</th>
-                                    <th>Balance Amount</th>
+                                    <!--<th>Return Amount</th>-->
+                                    <!--<th>Balance Amount</th>-->
                                     <th>Payment Mode</th>
                                     <th>Paid By</th>
                                     <th>Payment Time</th>
@@ -117,8 +117,8 @@ try {
                                     <td><%= rs.getString("customer_name") %></td>
                                     <td><%= rs.getString("invoice_no") %></td>
                                     <td>₹ <%= rs.getDouble("paid_amount") %></td>
-                                    <td>₹ <%= rs.getDouble("return_amount") %></td>
-                                    <td>₹ <%= rs.getDouble("balance_after") %></td>
+                                  
+                                   
                                     <td><%= rs.getString("payment_mode") %></td>
                                     <td><%= rs.getString("paid_by") %></td>
 

@@ -7,7 +7,7 @@
     String role = (session != null) ? (String) session.getAttribute("role") : null;
 
     if (role == null || !role.equalsIgnoreCase("Admin")) {
-        response.sendRedirect("Homepage.jsp");
+        response.sendRedirect("Login.jsp");
         return;
     }
 %>
@@ -17,7 +17,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Add Admin</title>
+        <title>Add Workers</title>
 
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -49,7 +49,7 @@
         <jsp:include page="ADashboard.jsp" />
         <div class="card" style=" border: 2px solid #DC143C; /* crimson border */
              transition: transform 0.3s ease, box-shadow 0.3s ease;margin-left:590px;">
-            <h3>Add New Admin</h3>
+            <h3>Add New Worker</h3>
 
             <form method="post">
                 <div class="mb-3">

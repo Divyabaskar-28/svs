@@ -5,164 +5,166 @@
         response.sendRedirect("Login.jsp");
         return;
     }
-
     String role = session1.getAttribute("role").toString();
 %>
 
-
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Admin Dashboard - SVS Sweets</title>
+<head>
+    <title>Admin Dashboard - SVS Sweets</title>
 
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
-        <style>
-            body{
-                margin:0;
-                font-family:'Segoe UI', sans-serif;
-                background:#f3f3f3;
-                margin-top:0;
-            }
+    <style>
+        body{
+            margin:0;
+            font-family:'Segoe UI', sans-serif;
+            background:#f3f3f3;
+        }
 
-            /* 🔴 SIDEBAR */
-            .sidebar{
-                width:260px;
-                height:100vh;
-                position:fixed;
-                background:linear-gradient(180deg,#c40000,#8b0000);
-                padding:20px 0;
-                color:#fff;
-                top: 0;
-                left: 0;
-            }
+        /* 🔴 SIDEBAR */
+        .sidebar{
+            width:260px;
+            height:100vh;
+            position:fixed;
+            top:0;
+            left:0;
+            background:linear-gradient(180deg,#c40000,#8b0000);
+            display:flex;
+            flex-direction:column;
+            color:#fff;
+        }
 
+        /* 🔒 FIXED LOGO */
+        .logo-box{
+            background:#ffffff;
+            margin:20px;
+            padding:15px;
+            border-radius:14px;
+            text-align:center;
+            box-shadow:0 6px 15px rgba(0,0,0,0.15);
+            flex-shrink:0;   /* Important */
+        }
 
-            .sidebar h4{
-                text-align:center;
-                font-weight:700;
-                margin-bottom:35px;
-                letter-spacing:1px;
-            }
+        .logo-box img{
+            max-width:100%;
+            height:50px;
+            object-fit:contain;
+        }
 
-            .sidebar a{
-                display:flex;
-                align-items:center;
-                gap:12px;
-                padding:13px 28px;
-                color:#fff;
-                text-decoration:none;
-                font-size:15px;
-                opacity:0.9;
-            }
+        /* 🔽 SCROLLABLE MENU */
+        .menu-section{
+            flex:1;
+            overflow-y:auto;
+            padding-bottom:20px;
+        }
 
-            .sidebar a:hover{
-                background:rgba(255,255,255,0.15);
-                border-left:4px solid #fff;
-                padding-left:24px;
-                opacity:1;
-            }
+        .sidebar a{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:13px 28px;
+            color:#fff;
+            text-decoration:none;
+            font-size:15px;
+            opacity:0.9;
+        }
 
+        .sidebar a:hover{
+            background:rgba(255,255,255,0.15);
+            border-left:4px solid #fff;
+            padding-left:24px;
+            opacity:1;
+        }
 
-            /* HEADER */
-            .page-title{
-                font-size:26px;
-                font-weight:700;
-                color:#c40000;
-                margin-bottom:35px;
-            }
+    </style>
+</head>
 
-            /* DASHBOARD BOX */
-            .dashboard-box{
-                background:#ffffff;
-                border-radius:18px;
-                padding:30px 20px;
-                text-align:center;
+<body>
 
-                /* 🔴 RED OUTLINE */
-                border:2px solid #c40000;
+<!-- 🔴 SIDEBAR -->
+<div class="sidebar">
 
-                box-shadow:0 8px 20px rgba(196,0,0,0.15);
-                transition:0.3s;
-            }
+    <!-- 🔒 Fixed Logo -->
+    <div class="logo-box">
+        <img src="./Images/logo.png" alt="SVS Sweets Logo">
+    </div>
 
-            .dashboard-box:hover{
-                transform:translateY(-6px);
+    <!-- 🔽 Scrollable Menu -->
+    <div class="menu-section">
 
-                /* 🔥 STRONG RED GLOW ON HOVER */
-                box-shadow:0 0 0 3px rgba(196,0,0,0.15),
-                    0 18px 40px rgba(196,0,0,0.25);
-            }
+        <a href="AdminDashboard.jsp">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
 
+        <% if ("Admin".equalsIgnoreCase(role)) { %>
 
-            .dashboard-box i{
-                font-size:42px;
-                color:#c40000;
-                margin-bottom:15px;
-            }
+        <a href="AddAdmin.jsp">
+            <i class="bi bi-person-badge-fill"></i> Add Workers
+        </a>
 
-            .dashboard-box h5{
-                font-size:18px;
-                font-weight:600;
-                color:#333;
-            }
-            .logo-box{
-                background:#ffffff;
-                margin:0 20px 35px;
-                padding:15px;
-                border-radius:14px;
-                text-align:center;
-                box-shadow:0 6px 15px rgba(0,0,0,0.15);
-            }
+        <a href="ViewWorkers.jsp">
+            <i class="bi bi-people-fill"></i> View Workers
+        </a>
 
-            .logo-box img{
-                max-width:100%;
-                height:50px;
-                object-fit:contain;
-            }
+        <% } %>
 
-        </style>
-    </head>
+        <a href="AddCustomer.jsp">
+            <i class="bi bi-person-plus-fill"></i> Add Customer
+        </a>
 
-    <body>
+        <a href="CustomerDetails.jsp">
+            <i class="bi bi-person-lines-fill"></i> Customer Details
+        </a>
 
+        <a href="GenerateBill.jsp">
+            <i class="bi bi-receipt"></i> Generate Hand Bill
+        </a>
 
-        <!-- 🔴 SIDEBAR -->
-        <div class="sidebar">
-            <div class="logo-box">
-                <img src="./Images/logo.png" alt="SVS Sweets Logo">
-            </div>
+        <a href="History.jsp">
+            <i class="bi bi-clock-history"></i> Hand Bill History
+        </a>
 
+        <a href="Payment.jsp">
+            <i class="bi bi-credit-card-2-front-fill"></i> Payment
+        </a>
 
+        <a href="PaymentHistory.jsp">
+            <i class="bi bi-cash-stack"></i> Payment History
+        </a>
 
-            <a href="AdminDashboard.jsp"><i class="bi bi-speedometer2"></i> Dashboard</a>
-            <%
-                if ("Admin".equalsIgnoreCase(role)) {
-            %>
-            <a href="AddAdmin.jsp">
-                <i class="bi bi-person-badge-fill"></i> Add Workers
-            </a>
+        <a href="ReturnUpdate.jsp">
+            <i class="bi bi-arrow-counterclockwise"></i> Return Update
+        </a>
 
-            <a href="ViewWorkers.jsp">
-                <i class="bi bi-people-fill"></i> View Workers
-            </a>
-            <%
-                }
-            %>
+        <a href="ViewReturnUpdate.jsp">
+            <i class="bi bi-journal-text"></i> Return History
+        </a>
 
+        <a href="Login.jsp">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
 
+    </div>
 
-            <a href="AddCustomer.jsp"><i class="bi bi-person-plus-fill"></i> Add Customer</a>
-            <a href="CustomerDetails.jsp"><i class="bi bi-person-lines-fill"></i> Customer Details</a>
-            <a href="GenerateBill.jsp"><i class="bi bi-receipt"></i> Generate Hand Bill</a>
-            <a href="History.jsp"><i class="bi bi-clock-history"></i> Hand Bill History</a>
-            <a href="Payment.jsp"><i class="bi bi-credit-card-2-front-fill"></i> Payment</a>
-            <a href="PaymentHistory.jsp"><i class="bi bi-cash-stack"></i> Payment History</a>
+</div>
+<script>
+    const menuSection = document.querySelector(".menu-section");
 
-            <a href="Homepage.jsp"><i class="bi bi-box-arrow-right"></i> Logout</a>
-        </div>
+    // 🔹 Restore scroll position when page loads
+    window.addEventListener("load", function () {
+        const savedScroll = localStorage.getItem("sidebarScroll");
+        if (savedScroll !== null) {
+            menuSection.scrollTop = savedScroll;
+        }
+    });
 
+    // 🔹 Save scroll position when scrolling
+    menuSection.addEventListener("scroll", function () {
+        localStorage.setItem("sidebarScroll", menuSection.scrollTop);
+    });
+</script>
 
-    </body>
+</body>
 </html>

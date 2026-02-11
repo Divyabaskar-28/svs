@@ -106,16 +106,7 @@
                     <input type="number" step="0.01" name="paid_amount" id="paidAmount" class="form-control" required oninput="calculateBalance()">
                 </div>
 
-                <div class="mb-3">
-                    <label>Return Amount</label>
-                    <input type="number"
-                           step="0.01"
-                           name="return_amount"
-                           id="returnAmount"
-                           class="form-control"
-                           value="0.00"
-                           oninput="calculateBalance()">
-                </div>
+
 
 
                 <input type="hidden" name="balance" id="balance">
@@ -127,7 +118,7 @@
                     <label>Payment Mode</label>
                     <select name="payment_mode" class="form-select" required>
                         <option value="">-- Select Mode --</option>
-                        <option value="Product">Product</option>
+                        <!--<option value="Product">Product</option>-->
                         <option value="Cash">Cash</option>
                         <option value="Bank Transfer">Bank Transfer</option>
                         <option value="Net Banking">Net Banking</option>
@@ -161,18 +152,11 @@
             function calculateBalance() {
                 const outstanding =
                         parseFloat(document.getElementById("totalOutstanding").value) || 0;
+
                 const paid =
                         parseFloat(document.getElementById("paidAmount").value) || 0;
-                const ret =
-                        parseFloat(document.getElementById("returnAmount").value) || 0;
 
-                let newBalance;
-
-                if (paid === 0 && ret === 0) {
-                    newBalance = outstanding;
-                } else {
-                    newBalance = outstanding - paid + ret; // 🔥 CORRECT
-                }
+                let newBalance = outstanding - paid;
 
                 document.getElementById("balance").value = newBalance.toFixed(2);
             }
@@ -180,11 +164,12 @@
 
 
 
+
             function validateForm() {
                 const paid = document.getElementById("paidAmount").value;
-                const ret = document.getElementById("returnAmount").value;
-                if (paid === "" || ret === "") {
-                    alert("Please enter both Paid and Return amount.");
+
+                if (paid === "") {
+                    alert("Please enter both Paid amount.");
                     return false;
                 }
                 return true;
