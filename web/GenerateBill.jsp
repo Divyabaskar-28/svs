@@ -196,100 +196,106 @@
             </form>
 
         </div>
-
         <script>
-            let currentInvoiceNumber = "";  // Hold invoice number across prints
+            let currentInvoiceNumber = "";
 
+            // 🔹 Add New Row
             function addRow() {
                 const tbody = document.getElementById("billBody");
                 const row = document.createElement("tr");
+
                 row.innerHTML = `
                     <td><input type="text" class="form-control item" placeholder="Item"></td>
-                    <td><input type="number" class="form-control qty" value="" min="1"></td>
-                    <td><input type="number" class="form-control amt" value="" min="0"></td>
-                    <td class="amount-column align-middle">0</td>
-                    <td class="no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button></td>
+                    <td><input type="number" class="form-control qty" min="1"></td>
+                    <td><input type="number" class="form-control amt" min="0" step="0.01"></td>
+                    <td class="amount-column align-middle">0.00</td>
+                    <td class="no-print">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">X</button>
+                    </td>
                 `;
+
                 tbody.appendChild(row);
             }
 
+            // 🔹 Remove Row
             function removeRow(btn) {
-                const row = btn.closest("tr");
-                row.remove();
+                btn.closest("tr").remove();
                 calculateTotal();
             }
 
-            document.addEventListener('input', function (e) {
-                if (e.target.classList.contains('qty') || e.target.classList.contains('amt')) {
+            // 🔹 Auto Calculate When Typing
+            document.addEventListener("input", function (e) {
+                if (e.target.classList.contains("qty") ||
+                        e.target.classList.contains("amt")) {
                     calculateTotal();
                 }
             });
 
+            // 🔹 Calculate Total
             function calculateTotal() {
                 let total = 0;
-                const rows = document.querySelectorAll("#billBody tr");
-                rows.forEach(row => {
+
+                document.querySelectorAll("#billBody tr").forEach(row => {
                     const qty = parseFloat(row.querySelector(".qty").value) || 0;
                     const price = parseFloat(row.querySelector(".amt").value) || 0;
                     const amount = qty * price;
+
                     row.querySelector(".amount-column").innerText = amount.toFixed(2);
                     total += amount;
                 });
+
                 document.getElementById("daysAmount").innerText = total.toFixed(2);
+
                 const balance = parseFloat(document.getElementById("balance").value) || 0;
-                document.getElementById("totalAmount").innerText = (total + balance).toFixed(2);
+                document.getElementById("totalAmount").innerText =
+                        (total + balance).toFixed(2);
             }
 
+            // 🔹 Update Customer & Date Display + Fetch Balance
             function updateDisplay() {
                 const name = document.getElementById("customerName").value;
-                document.getElementById("nameDisplay").innerText = name;
+                document.getElementById("nameDisplay").innerText = name || "--";
 
                 const dateInput = document.getElementById("billDate").value;
                 if (dateInput) {
                     const dateObj = new Date(dateInput);
-                    const formattedDate = dateObj.toLocaleDateString('en-GB'); // Format as dd/mm/yyyy
-                    document.getElementById("dateDisplay").innerText = formattedDate;
+                    document.getElementById("dateDisplay").innerText =
+                            dateObj.toLocaleDateString("en-GB");
                 } else {
                     document.getElementById("dateDisplay").innerText = "--";
                 }
 
-                // 🟢 Fetch balance from backend dynamically
+                // Fetch balance
                 if (name) {
                     fetch("GetBalance.jsp?customer=" + encodeURIComponent(name))
                             .then(res => res.json())
                             .then(data => {
-                                if (data.balance !== undefined) {
-                                    document.getElementById("balance").value = data.balance;
-                                    calculateTotal();
-                                }
+                                document.getElementById("balance").value = data.balance || 0;
+                                calculateTotal();
                             })
-                            .catch(error => {
-                                console.error("Error fetching balance:", error);
-                            });
+                            .catch(err => console.error("Balance fetch error:", err));
                 }
             }
 
-
+            // 🔹 Generate Invoice Number
             function generateInvoiceNumber() {
                 const now = new Date();
-                const yyyy = now.getFullYear();
-                const mm = ("0" + (now.getMonth() + 1)).slice(-2);
-                const dd = ("0" + now.getDate()).slice(-2);
-                const hh = ("0" + now.getHours()).slice(-2);
-                const mi = ("0" + now.getMinutes()).slice(-2);
-                const ss = ("0" + now.getSeconds()).slice(-2);
-                const invoice = "INV" + yyyy + mm + dd + hh + mi + ss;
-                console.log("Generated Invoice:", invoice); // ✅ debug
-                return invoice;
+                return "INV" +
+                        now.getFullYear() +
+                        ("0" + (now.getMonth() + 1)).slice(-2) +
+                        ("0" + now.getDate()).slice(-2) +
+                        ("0" + now.getHours()).slice(-2) +
+                        ("0" + now.getMinutes()).slice(-2) +
+                        ("0" + now.getSeconds()).slice(-2);
             }
 
-
+            // 🔹 Print & Save Bill
             function printBill() {
                 const name = document.getElementById("customerName").value.trim();
                 const date = document.getElementById("billDate").value.trim();
 
                 if (!name || !date) {
-                    alert("Please fill in both customer name and date.");
+                    alert("Please select customer and date.");
                     return;
                 }
 
@@ -298,38 +304,50 @@
                 currentInvoiceNumber = generateInvoiceNumber();
                 document.getElementById("invoiceNumber").innerText = currentInvoiceNumber;
 
-                // Fill form fields
+                // Fill hidden form
                 document.getElementById("formInvoice").value = currentInvoiceNumber;
                 document.getElementById("formName").value = name;
                 document.getElementById("formDate").value = date;
-                document.getElementById("formDays").value = document.getElementById("daysAmount").innerText;
-                document.getElementById("formBalance").value = document.getElementById("balance").value;
-                document.getElementById("formTotal").value = document.getElementById("totalAmount").innerText;
+                document.getElementById("formDays").value =
+                        document.getElementById("daysAmount").innerText;
+                document.getElementById("formBalance").value =
+                        document.getElementById("balance").value;
+                document.getElementById("formTotal").value =
+                        document.getElementById("totalAmount").innerText;
 
-                // Collect item data
+                // Collect items
                 let items = [];
+
                 document.querySelectorAll("#billBody tr").forEach(row => {
-                    const item = row.querySelector(".item").value;
+                    const item = row.querySelector(".item").value.trim();
                     const qty = row.querySelector(".qty").value;
                     const amt = row.querySelector(".amt").value;
                     const amount = row.querySelector(".amount-column").innerText;
+
                     if (item && qty && amt) {
                         items.push({item, qty, amt, amount});
                     }
                 });
+
+                if (items.length === 0) {
+                    alert("Add at least one item.");
+                    return;
+                }
+
                 document.getElementById("formItems").value = JSON.stringify(items);
 
                 // Submit form
                 document.getElementById("billForm").submit();
             }
 
-            window.addEventListener("DOMContentLoaded", () => {
+            // 🔹 On Page Load
+            window.addEventListener("DOMContentLoaded", function () {
                 currentInvoiceNumber = generateInvoiceNumber();
                 document.getElementById("invoiceNumber").innerText = currentInvoiceNumber;
-                updateDisplay(); // ensure name/date placeholders are filled if values are preset
+                calculateTotal();
             });
-
         </script>
+
 
     </body>
 </html>

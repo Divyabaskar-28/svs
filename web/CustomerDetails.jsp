@@ -80,9 +80,11 @@
                         <th>#</th>
                         <th>Name</th>
                         <th>Organisation</th>
+                        <th>Email</th>
                         <th>Mobile</th>
                         <th>Place</th>
-                        <th>Email</th>
+                        <th>State</th>
+                        <th>Pincode</th>
                         <th>View</th>
                         <th>Edit</th>
                     </tr>
@@ -101,9 +103,13 @@
                         <td><%= count++%></td>
                         <td><%= rs.getString("name")%></td>
                         <td><%= rs.getString("organisation")%></td>
+                        <td><%= rs.getString("email")%></td>
                         <td><%= rs.getString("mobile")%></td>
                         <td><%= rs.getString("place")%></td>
-                        <td><%= rs.getString("email")%></td>
+                        
+                        <td><%= rs.getString("state")%></td>
+                        <td><%= rs.getString("pincode")%></td>
+
 
                         <!-- VIEW BUTTON -->
                         <td>

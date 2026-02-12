@@ -71,7 +71,7 @@
                     <th>Customer Name</th>
                     <th>Invoice No</th>
                     <th>Return Amount</th>
-                    <th>Balance After</th>
+                    
                     <th>Return Time</th>
                 </tr>
             </thead>
@@ -88,9 +88,10 @@ SimpleDateFormat dateOnly = new SimpleDateFormat("dd-MM-yyyy");
 
 try {
     con = DBConnection.getConnection();
-    ps = con.prepareStatement(
-        "SELECT * FROM payment_history WHERE return_amount IS NOT NULL AND return_amount > 0 ORDER BY return_time DESC"
-    );
+   ps = con.prepareStatement(
+    "SELECT * FROM bills WHERE return_amount IS NOT NULL AND return_amount > 0 ORDER BY return_time DESC"
+);
+
     rs = ps.executeQuery();
 
     while(rs.next()) {
@@ -102,7 +103,7 @@ try {
                     <td><%= rs.getString("customer_name") %></td>
                     <td><%= rs.getString("invoice_no") %></td>
                     <td>₹ <%= rs.getDouble("return_amount") %></td>
-                    <td>₹ <%= rs.getDouble("balance_after") %></td>
+                 
 
                     <td data-date="<%= dateOnly.format(ts) %>">
                         <%= sdf.format(ts) %>
@@ -139,7 +140,7 @@ try {
                 row.children[1].innerText.toLowerCase();
 
             const rowDate =
-                row.children[5].getAttribute("data-date")
+                row.children[4].getAttribute("data-date")
                     .split("-").reverse().join("-");
 
             const matchName = customer.includes(name);

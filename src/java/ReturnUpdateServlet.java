@@ -56,7 +56,11 @@ public class ReturnUpdateServlet extends HttpServlet {
             psUpdate.executeUpdate();
 
             // 🔹 Get latest payment_id
-            String getPaymentId = "SELECT payment_id FROM payment_history WHERE invoice_no=? ORDER BY payment_id DESC LIMIT 1";
+            // 🔹 Get latest payment_id safely
+            String getPaymentId
+                    = "SELECT payment_id FROM payment_history "
+                    + "WHERE invoice_no=? ORDER BY payment_id DESC LIMIT 1";
+
             PreparedStatement psGet = con.prepareStatement(getPaymentId);
             psGet.setString(1, invoiceNo);
             ResultSet rsPay = psGet.executeQuery();
@@ -65,7 +69,14 @@ public class ReturnUpdateServlet extends HttpServlet {
 
                 int paymentId = rsPay.getInt("payment_id");
 
-                String updateHistory = "UPDATE payment_history SET return_amount=?, balance_after=?, return_time=CURRENT_TIMESTAMP WHERE payment_id=?";
+                // 🔹 Update using direct id (SAFE for MySQL + PostgreSQL)
+                String updateHistory
+                        = "UPDATE payment_history "
+                        + "SET return_amount = COALESCE(return_amount,0) + ?, "
+                        + "    balance_after = ?, "
+                        + "    return_time = CURRENT_TIMESTAMP "
+                        + "WHERE payment_id = ?";
+
                 PreparedStatement psHistory = con.prepareStatement(updateHistory);
                 psHistory.setDouble(1, returnAmount);
                 psHistory.setDouble(2, newBalance);

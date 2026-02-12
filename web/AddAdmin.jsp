@@ -48,7 +48,7 @@
     <body>
         <jsp:include page="ADashboard.jsp" />
         <div class="card" style=" border: 2px solid #DC143C; /* crimson border */
-             transition: transform 0.3s ease, box-shadow 0.3s ease;margin-left:590px;">
+             transition: transform 0.3s ease, box-shadow 0.3s ease;margin-left:585px;">
             <h3>Add New Worker</h3>
 
             <form method="post">
