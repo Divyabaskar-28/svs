@@ -73,7 +73,7 @@
                         <th>Download</th>
                             <% if (canEditDelete) { %>
                         <!--<th>Delete</th>-->
-                            <% } %>
+                        <% } %>
                     </tr>
                 </thead>
 
@@ -93,7 +93,10 @@
                             String invoice = rs.getString("invoice_no");
                     %>
 
-                    <tr>
+                    <tr 
+                        data-name="<%= rs.getString("customer_name")%>"
+                        data-date="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(rs.getTimestamp("created_at"))%>">
+
                         <td><%= sno++%></td>
 
                         <td><%= rs.getString("customer_name")%></td>
@@ -119,7 +122,7 @@
                         </td>
 
                         <% if (canEditDelete) {%>
-                       
+
                         <% } %>
                     </tr>
 
@@ -161,13 +164,13 @@
                             );
 
                             if (canEditDelete) {
-                               // modals.append(
-                               //         "<td>"
-                               //         + "<button class='btn btn-warning btn-sm' onclick='enableEdit(" + itemId + ")'><i class='bi bi-pencil'></i></button> "
-                               //         + "<button class='btn btn-success btn-sm d-none' id='save_" + itemId + "' onclick='saveItem(" + itemId + ")'><i class='bi bi-check'></i></button>"
-                               //         + "</td>"
-                               //         + "<td><button class='btn btn-danger btn-sm' onclick=\"if(confirm('Delete this item?')) location.href='DeleteItem.jsp?id=" + itemId + "'\"><i class='bi bi-trash'></i></button></td>"
-                               //    );
+                                // modals.append(
+                                //         "<td>"
+                                //         + "<button class='btn btn-warning btn-sm' onclick='enableEdit(" + itemId + ")'><i class='bi bi-pencil'></i></button> "
+                                //         + "<button class='btn btn-success btn-sm d-none' id='save_" + itemId + "' onclick='saveItem(" + itemId + ")'><i class='bi bi-check'></i></button>"
+                                //         + "</td>"
+                                //         + "<td><button class='btn btn-danger btn-sm' onclick=\"if(confirm('Delete this item?')) location.href='DeleteItem.jsp?id=" + itemId + "'\"><i class='bi bi-trash'></i></button></td>"
+                                //    );
                             }
 
                             modals.append("</tr>");
@@ -197,13 +200,22 @@
             const dateInput = document.getElementById("dateFilter");
 
             function filterTable() {
-                const name = nameInput.value.toLowerCase();
-                const date = dateInput.value;
+                const nameValue = nameInput.value.toLowerCase().trim();
+                const dateValue = dateInput.value;
 
                 document.querySelectorAll("#billingTable tbody tr").forEach(row => {
-                    const customer = row.children[2].innerText.toLowerCase();
-                    const rowDate = row.children[1].innerText.split("-").reverse().join("-");
-                    row.style.display = (customer.includes(name) && (!date || rowDate === date)) ? "" : "none";
+
+                    const customerName = row.getAttribute("data-name").toLowerCase();
+                    const createdDate = row.getAttribute("data-date");
+
+                    const nameMatch = customerName.includes(nameValue);
+                    const dateMatch = !dateValue || createdDate === dateValue;
+
+                    if (nameMatch && dateMatch) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
                 });
             }
 
@@ -216,26 +228,10 @@
                 filterTable();
             }
 
-            function enableEdit(id) {
-                document.getElementById("name_" + id).disabled = false;
-                document.getElementById("qty_" + id).disabled = false;
-                document.getElementById("price_" + id).disabled = false;
-                document.getElementById("save_" + id).classList.remove("d-none");
-            }
-
-            function saveItem(id) {
-                let name = document.getElementById("name_" + id).value;
-                let qty = document.getElementById("qty_" + id).value;
-                let price = document.getElementById("price_" + id).value;
-
-                let xhr = new XMLHttpRequest();
-                xhr.open("POST", "UpdateItemAjax.jsp", true);
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xhr.send("id=" + id + "&name=" + name + "&qty=" + qty + "&price=" + price);
-
-                xhr.onload = () => location.reload();
-            }
+            // Optional: Run once when page loads
+            document.addEventListener("DOMContentLoaded", filterTable);
         </script>
+
 
     </body>
 </html>
