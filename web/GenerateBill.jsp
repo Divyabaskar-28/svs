@@ -13,7 +13,7 @@
         <style>
             body {
                 background-color: #f4f4f4;
-                font-family: 'Courier New', monospace;
+                font-family: 'Segoe UI', sans-serif;
                 margin: 0;
                 padding: 20px;
             }
@@ -22,25 +22,30 @@
             .bill-wrapper {
                 display: flex;
                 justify-content: center;
-                align-items: center;
-                min-height: 100vh;
+                align-items: flex-start;  /* important */
+                min-height: auto;         /* remove full height */
+                padding: 0;
             }
 
             .bill-container {
-                max-width: 550px;
+                /*max-width: 550px;*/
                 width: 100%;
-                background: white;
-                border: 2px solid #DC143C; /* crimson border */
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                box-shadow: 0 0 20px rgba(0,0,0,0.2);
+                /*background: white;*/
+                /*border: 2px solid #DC143C;  crimson border */
+                /*transition: transform 0.3s ease, box-shadow 0.3s ease;*/
+                /*box-shadow: 0 0 20px rgba(0,0,0,0.2);*/
                 font-size: 12pt;
                 line-height: 1.4;
-                margin: 20px auto;
-                margin-left:505px;
+                /*margin: 20px auto;*/
+                /*margin-left:505px;*/
             }
 
             .bill-content {
                 padding: 25px 20px;
+            }
+            .bill-container,
+            .input-section {
+                margin: 0;
             }
 
             /* Bill Header */
@@ -72,10 +77,10 @@
 
             /* Bill Info Section */
             .bill-info {
-                margin-bottom: 20px;
-                padding: 10px 0;
-                border-bottom: 1px solid #333;
+                margin-bottom: 8px;   /* reduced */
+                padding: 6px 0;
             }
+
 
             .info-row {
                 display: flex;
@@ -165,22 +170,27 @@
                 padding-top: 5px;
                 font-size: 10px;
             }
+            .main-container {
+                max-width: 550px;
+                /*margin: 30px auto;*/
+                background: #fff;
+                border: 2px solid #DC143C;
+                box-shadow: 0 0 20px rgba(0,0,0,0.15);
+            }
 
             /* Input Section (Non-printable) */
             .input-section {
                 max-width: 549px;
-                margin: 20px auto;
-                padding: 20px;
+                margin: 0 auto;      /* reduce gap */
+                padding: 15px 20px;  /* reduce height */
+                border-bottom: 2px solid grey;
                 background: #fff;
-                border: 1px solid #ddd;
-                /*border-radius: 8px;*/
-                margin-left:508px;
             }
 
-            .input-section input, 
-            .input-section select {
-                margin-bottom: 10px;
-            }
+
+            .input-section .form-control {
+                margin-bottom: 0px;
+            }   
 
             .btn-section {
                 max-width: 400px;
@@ -192,8 +202,14 @@
 
                 body {
                     background: #fff;
-                    padding: 0;
                     margin: 0;
+                    padding: 0;
+                }
+                .main-container {
+                    width: 550px;          /* Same as screen */
+                    margin: 0 auto;        /* Center in A4 */
+                    border: none;
+                    box-shadow: none;
                 }
 
                 .no-print,
@@ -214,11 +230,9 @@
 
                 .bill-container {
                     width: 100%;
-                    max-width: 700px;   /* Good size for A4 */
-                    margin: 0 auto;
                     border: 1px solid #000;
-                    box-shadow: none;
                 }
+
 
                 .bill-content {
                     padding: 20px;
@@ -278,6 +292,7 @@
                 margin: 10mm;
             }
 
+
         </style>
     </head>
     <body>
@@ -285,138 +300,133 @@
             <jsp:include page="ADashboard.jsp" />
         </div>
 
-
-        <!-- Input Section (Non-printable) -->
-        <div class="input-section no-print" style="border: 2px solid #DC143C; /* crimson border */
-             transition: transform 0.3s ease, box-shadow 0.3s ease;">
-            <h4 class="text-center mb-3">Generate New Bill</h4>
-            <div class="row">
-                <div class="col-12">
-                    <select id="customerName" class="form-control" onchange="updateDisplay()" required>
-                        <option value="">-- Select Customer --</option>
-                        <% try (Connection con = DBConnection.getConnection();
-                                    Statement stmt = con.createStatement();
-                                    ResultSet rs = stmt.executeQuery("SELECT name FROM customers ORDER BY name ASC")) {
-                                while (rs.next()) {
-                                    String custName = rs.getString("name");
-                        %>
-                        <option value="<%= custName%>"><%= custName%></option>
-                        <%
+        <div class="main-container" style="border: 2px solid #DC143C; /* crimson border */
+             transition: transform 0.3s ease, box-shadow 0.3s ease;margin-left:500px;">
+            <!-- Input Section (Non-printable) -->
+            <div class="input-section no-print">
+                <h4 class="text-center mb-3">Generate New Bill</h4>
+                <div class="row">
+                    <div class="col-12" style="margin-bottom:5px;">
+                        <select id="customerName" class="form-control" onchange="updateDisplay()" required>
+                            <option value="">-- Select Customer --</option>
+                            <% try (Connection con = DBConnection.getConnection();
+                                        Statement stmt = con.createStatement();
+                                        ResultSet rs = stmt.executeQuery("SELECT name FROM customers ORDER BY name ASC")) {
+                                    while (rs.next()) {
+                                        String custName = rs.getString("name");
+                            %>
+                            <option value="<%= custName%>"><%= custName%></option>
+                            <%
+                                    }
+                                } catch (Exception e) {
+                                    out.println("<option disabled>Error loading customers</option>");
+                                    e.printStackTrace();
                                 }
-                            } catch (Exception e) {
-                                out.println("<option disabled>Error loading customers</option>");
-                                e.printStackTrace();
-                            }
-                        %>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <input type="date" id="billDate" class="form-control" oninput="updateDisplay()" required>
+                            %>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <input type="date" id="billDate" class="form-control" oninput="updateDisplay()" required>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Bill Container - Exact Bill Design -->
-        <div class="bill-wrapper">
-            <div class="bill-container" id="printArea">
-                <div class="bill-content">
-                    <!-- Bill Header -->
-                    <div class="bill-header">
-                        <div class="shop-name">SVS SWEETS</div>
-                        <div class="shop-sub">Since 1995 | Quality Sweet Shop</div>
-                        <div class="shop-sub">616/1 Vaikunda Samy Nagar, Eachanari,TamilNadu</div>
-                        <div class="shop-sub">Phone: +91 9442641997</div>
-                        <div class="gst-info">GST No: 33AHTPT5363M1ZH | FSSAI: 12345678901234</div>
-                    </div>
+            <!-- Bill Container - Exact Bill Design -->
+            <div class="bill-wrapper">
+                <div class="bill-container" id="printArea">
+                    <div class="bill-content">
 
-                    <!-- Bill Information -->
-                    <div class="bill-info">
-                        <div class="info-row">
-                            <span class="info-label">Invoice No:</span>
-                            <span id="invoiceNumber">__________</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Date:</span>
-                            <span id="dateDisplay">__________</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Customer Name:</span>
-                            <span id="nameDisplay">__________</span>
-                        </div>
-                    </div>
-
-                    <!-- Items Table -->
-                    <table class="items-table" id="billTable">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th>Price</th>
-                                <th>Amount</th>
-                                <th class="no-print">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="billBody">
-                            <tr class="item-row">
-                                <td><input type="text" class="form-control item" placeholder="Item"></td>
-                                <td><input type="number" class="form-control qty" value="" min="1"></td>
-                                <td><input type="number" class="form-control amt" value="" min="0" step="0.01"></td>
-                                <td class="amount-column">0.00</td>
-                                <td class="no-print"><button type="button" class="remove-btn" onclick="removeRow(this)">✕</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <!-- Add Row Button (Non-printable) -->
-                    <div class="text-center no-print mb-3">
-                        <button type="button" class="add-row-btn" onclick="addRow()">+ Add More Item</button>
-                    </div>
-
-                    <!-- Bill Summary -->
-                    <div class="bill-summary">
-                        <div class="summary-row">
-                            <span>Day's Amount:</span>
-                            <span id="daysAmount">0.00</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Previous Balance:</span>
-                            <span><input type="number" id="balance" class="form-control" value="0" readonly style="width: 100px; text-align: right; border: none; background: transparent; font-weight: normal;"></span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total Amount:</span>
-                            <span id="totalAmount">0.00</span>
-                        </div>
-                    </div>
-
-                    <!-- Amount in Words -->
-                    <div style="margin-top: 15px; font-size: 10pt; border-top: 1px dashed #333; padding-top: 10px;">
-                        <span class="info-label">Amount in Words:</span><br>
-                        <span id="amountInWords">__________________________________</span>
-                    </div>
-
-                    <!-- Bill Footer -->
-                    <div class="bill-footer">
-                        <div>* Thank you for your visit. Please visit again *</div>
-<!--                        <div style="font-size: 9px; margin-top: 5px;">This is a computer generated invoice</div>
-
-                        <div class="signature-area">
-                            <div class="signature-line">Customer Signature</div>
-                            <div class="signature-line">Authorized Signature</div>
+                        <!-- Bill Information -->
+                        <div class="bill-info">
+                            <div class="info-row">
+                                <span class="info-label">Invoice No:</span>
+                                <span id="invoiceNumber">__________</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Date:</span>
+                                <span id="dateDisplay">__________</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Customer Name:</span>
+                                <span id="nameDisplay">__________</span>
+                            </div>
                         </div>
 
-                        <div style="font-size: 9px; margin-top: 15px;">
-                            Subject to City Jurisdiction | E.& O.E.
-                        </div>-->
+                        <!-- Items Table -->
+                        <table class="items-table" id="billTable">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>Amount</th>
+                                    <th class="no-print">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billBody">
+                                <tr class="item-row">
+                                    <td><input type="text" class="form-control item" placeholder="Item"></td>
+                                    <td><input type="number" class="form-control qty" value="" min="1"></td>
+                                    <td><input type="number" class="form-control amt" value="" min="0" step="0.01"></td>
+                                    <td class="amount-column">0.00</td>
+                                    <td class="no-print"><button type="button" class="remove-btn" onclick="removeRow(this)">✕</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Add Row Button (Non-printable) -->
+                        <div class="text-center no-print mb-3">
+                            <button type="button" class="add-row-btn" onclick="addRow()">+ Add More Item</button>
+                        </div>
+
+                        <!-- Bill Summary -->
+                        <div class="bill-summary">
+                            <div class="summary-row">
+                                <span>Day's Amount:</span>
+                                <span id="daysAmount">0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Previous Balance:</span>
+                                <span><input type="number" id="balance" class="form-control" value="0" readonly style="width: 100px; text-align: right; border: none; background: transparent; font-weight: normal;"></span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total Amount:</span>
+                                <span id="totalAmount">0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Amount in Words -->
+                        <div style="margin-top: 15px; font-size: 10pt; border-top: 1px dashed #333; padding-top: 10px;">
+                            <span class="info-label">Amount in Words:</span><br>
+                            <span id="amountInWords">__________________________________</span>
+                        </div>
+
+                        <!-- Bill Footer -->
+                        <div class="bill-footer">
+                            <div>* Thank you for your order. Please order again *</div>
+                            <!--                        <div style="font-size: 9px; margin-top: 5px;">This is a computer generated invoice</div>
+                            
+                                                    <div class="signature-area">
+                                                        <div class="signature-line">Customer Signature</div>
+                                                        <div class="signature-line">Authorized Signature</div>
+                                                    </div>
+                            
+                                                    <div style="font-size: 9px; margin-top: 15px;">
+                                                        Subject to City Jurisdiction | E.& O.E.
+                                                    </div>-->
+                        </div>
                     </div>
                 </div>
+
+            </div>
+            <div class="btn-section no-print">
+                <button class="control-btn" onclick="printBill()">Print Bill</button>
+                <!--<button class="control-btn" style="background: #17a2b8;" onclick="previewBill()">Preview</button>-->
             </div>
         </div>
 
         <!-- Action Buttons (Non-printable) -->
-        <div class="btn-section no-print" style="margin-left:575px;">
-            <button class="control-btn" onclick="printBill()">Print Bill</button>
-            <!--<button class="control-btn" style="background: #17a2b8;" onclick="previewBill()">Preview</button>-->
-        </div>
+
 
         <!-- Hidden form for submission -->
         <form id="billForm" action="SaveBillServlet" method="post" class="no-print">
