@@ -26,7 +26,6 @@
         boolean isMySQL = dbType.toLowerCase().contains("mysql");
         boolean isPostgreSQL = dbType.toLowerCase().contains("postgresql");
 
-        // 🔹 Customer Count
         ps = con.prepareStatement("SELECT COUNT(*) FROM customers");
         rs = ps.executeQuery();
         if (rs.next()) {
@@ -35,13 +34,10 @@
         rs.close();
         ps.close();
 
-        // 🔹 Today Bill Amount (MySQL + PostgreSQL compatible)
-        String billQuery;
-        if (isMySQL) {
-            billQuery = "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE()";
-        } else { // PostgreSQL
-            billQuery = "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE";
-        }
+        String billQuery = isMySQL
+                ? "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE()"
+                : "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE";
+
         ps = con.prepareStatement(billQuery);
         rs = ps.executeQuery();
         if (rs.next()) {
@@ -50,13 +46,10 @@
         rs.close();
         ps.close();
 
-        // 🔹 Today Payment Amount
-        String paymentQuery;
-        if (isMySQL) {
-            paymentQuery = "SELECT COALESCE(SUM(paid_amount),0) FROM payment_history WHERE DATE(payment_time)=CURRENT_DATE()";
-        } else {
-            paymentQuery = "SELECT COALESCE(SUM(paid_amount),0) FROM payment_history WHERE DATE(payment_time)=CURRENT_DATE";
-        }
+        String paymentQuery = isMySQL
+                ? "SELECT COALESCE(SUM(paid_amount),0) FROM payment_history WHERE DATE(payment_time)=CURRENT_DATE()"
+                : "SELECT COALESCE(SUM(paid_amount),0) FROM payment_history WHERE DATE(payment_time)=CURRENT_DATE";
+
         ps = con.prepareStatement(paymentQuery);
         rs = ps.executeQuery();
         if (rs.next()) {
@@ -65,13 +58,10 @@
         rs.close();
         ps.close();
 
-        // 🔹 Today Return Amount
-        String returnQuery;
-        if (isMySQL) {
-            returnQuery = "SELECT COALESCE(SUM(return_amount),0) FROM bills WHERE DATE(return_time)=CURRENT_DATE() AND return_time IS NOT NULL";
-        } else {
-            returnQuery = "SELECT COALESCE(SUM(return_amount),0) FROM bills WHERE DATE(return_time)=CURRENT_DATE AND return_time IS NOT NULL";
-        }
+        String returnQuery = isMySQL
+                ? "SELECT COALESCE(SUM(return_amount),0) FROM bills WHERE DATE(return_time)=CURRENT_DATE() AND return_time IS NOT NULL"
+                : "SELECT COALESCE(SUM(return_amount),0) FROM bills WHERE DATE(return_time)=CURRENT_DATE AND return_time IS NOT NULL";
+
         ps = con.prepareStatement(returnQuery);
         rs = ps.executeQuery();
         if (rs.next()) {
@@ -108,131 +98,135 @@
         <title>Admin Dashboard - SVS Sweets</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
         <style>
             body{
                 margin:0;
                 font-family:'Segoe UI', sans-serif;
-                background:#f3f3f3;
+                background:#f4f6f9;
             }
 
             .main-content{
                 margin-left:250px;
-                padding:35px;
+                padding:25px;
                 min-height:100vh;
-                background:#fff;
-                border-top-left-radius:25px;
             }
 
-            .dashboard-box{
+            .stat-card{
                 background:#ffffff;
-                border-radius:18px;
-                padding:30px 20px;
-                text-align:center;
-                border:2px solid #c40000;
-                box-shadow:0 8px 20px rgba(196,0,0,0.15);
+                border-radius:14px;
+                padding:18px;
+                border:1px solid #eee;
+                box-shadow:0 4px 12px rgba(0,0,0,0.05);
                 transition:0.3s;
             }
 
-            .dashboard-box:hover{
-                transform:translateY(-6px);
-                box-shadow:0 0 0 3px rgba(196,0,0,0.15),
-                    0 18px 40px rgba(196,0,0,0.25);
+            .stat-card:hover{
+                transform:translateY(-4px);
+                box-shadow:0 8px 18px rgba(0,0,0,0.08);
             }
 
-            .dashboard-box i{
-                font-size:42px;
+            .stat-icon{
+                font-size:28px;
                 color:#c40000;
-                margin-bottom:10px;
             }
 
-            .dashboard-box h5{
-                font-size:18px;
+            .stat-title{
+                font-size:14px;
+                color:#666;
+                margin-bottom:5px;
+            }
+
+            .stat-value{
+                font-size:20px;
                 font-weight:600;
-                color:#333;
+                color:#111;
             }
 
-            .dashboard-box h3{
-                font-weight:700;
-                color:#000;
+            .analytics-card{
+                background:#fff;
+                border-radius:16px;
+                padding:25px;
+                margin-top:30px;
+                box-shadow:0 4px 16px rgba(0,0,0,0.06);
             }
 
-            .card {
-                border-radius: 18px;
-                border: none;
+            #filter{
+                border-radius:20px;
+                padding:5px 15px;
+                font-size:14px;
             }
 
-            #filter {
-                width: 150px;
-                border-radius: 25px;
-                border: 2px solid #c40000;
-                padding: 8px 15px;
-                font-weight: 500;
-            }
         </style>
     </head>
 
     <body>
+
         <jsp:include page="ADashboard.jsp" />
 
         <div class="main-content">
-            <h3 class="mb-4">📊 Admin Dashboard</h3>
 
-            <div style="text-align:center; margin-bottom:25px;">
-                <i class="bi bi-person-circle" style="font-size:28px; color:#c40000;"></i><br>
-                <strong style="font-size:18px;">Welcome, <%= adminName%>!</strong>
+            <h4 class="mb-3">📊 Admin Dashboard</h4>
+
+            <div class="mb-4">
+                <i class="bi bi-person-circle" style="font-size:22px;color:#c40000;"></i>
+                <span style="font-weight:500;"> Welcome, <%= adminName%>!</span>
             </div>
 
-            <div class="row g-4">
-                <!-- Customers -->
+            <!-- Stats Row -->
+            <div class="row g-3">
+
                 <div class="col-md-3">
-                    <div class="dashboard-box">
-                        <i class="bi bi-people-fill"></i>
-                        <h5>Total Customers</h5>
-                        <h3><%= customerCount%></h3>
+                    <div class="stat-card text-center">
+                        <i class="bi bi-people-fill stat-icon"></i>
+                        <div class="stat-title mt-2">Total Customers</div>
+                        <div class="stat-value"><%= customerCount%></div>
                     </div>
                 </div>
 
-                <!-- Today Billing -->
                 <div class="col-md-3">
-                    <div class="dashboard-box">
-                        <i class="bi bi-receipt-cutoff"></i>
-                        <h5>Today's Billing</h5>
-                        <h3>₹ <%= String.format("%,.2f", todayBillAmount)%></h3>
+                    <div class="stat-card text-center">
+                        <i class="bi bi-receipt stat-icon"></i>
+                        <div class="stat-title mt-2">Today's Billing</div>
+                        <div class="stat-value">₹ <%= String.format("%,.2f", todayBillAmount)%></div>
                     </div>
                 </div>
 
-                <!-- Today Payments -->
                 <div class="col-md-3">
-                    <div class="dashboard-box">
-                        <i class="bi bi-cash-coin"></i>
-                        <h5>Today's Payments</h5>
-                        <h3>₹ <%= String.format("%,.2f", todayPaymentAmount)%></h3>
+                    <div class="stat-card text-center">
+                        <i class="bi bi-cash-coin stat-icon"></i>
+                        <div class="stat-title mt-2">Today's Payments</div>
+                        <div class="stat-value">₹ <%= String.format("%,.2f", todayPaymentAmount)%></div>
                     </div>
                 </div>
 
-                <!-- Today Return -->
                 <div class="col-md-3">
-                    <div class="dashboard-box">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                        <h5>Today's Return</h5>
-                        <h3>₹ <%= String.format("%,.2f", todayReturnAmount)%></h3>
+                    <div class="stat-card text-center">
+                        <i class="bi bi-arrow-counterclockwise stat-icon"></i>
+                        <div class="stat-title mt-2">Today's Return</div>
+                        <div class="stat-value">₹ <%= String.format("%,.2f", todayReturnAmount)%></div>
                     </div>
                 </div>
+
             </div>
 
-            <div class="card mt-5 p-4 shadow">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="mb-0">📈 Sales Analytics</h5>
+            <!-- Analytics -->
+            <div class="analytics-card">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">📈 Sales Analytics</h6>
+
                     <select id="filter" class="form-select w-auto">
                         <option value="week">Current Week</option>
                         <option value="month">Month Wise</option>
                         <option value="year">Year Wise</option>
                     </select>
-
                 </div>
 
-                <canvas id="salesChart" height="100"></canvas>
+                <canvas id="salesChart" height="90"></canvas>
+
             </div>
+
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -241,51 +235,33 @@
 
             function loadChart(filter) {
                 fetch("SalesChartServlet?filter=" + filter)
-                        .then(response => response.json())
+                        .then(res => res.json())
                         .then(data => {
-                            if (chart) {
+
+                            if (chart)
                                 chart.destroy();
-                            }
 
                             const ctx = document.getElementById('salesChart').getContext('2d');
 
                             chart = new Chart(ctx, {
-                                type: 'line',
+                                type: 'bar', // ✅ BAR GRAPH
                                 data: {
                                     labels: data.labels,
                                     datasets: [
                                         {
                                             label: 'Billing',
                                             data: data.bill,
-                                            borderColor: '#c40000',
-                                            backgroundColor: 'rgba(196,0,0,0.05)',
-                                            tension: 0.4,
-                                            fill: true,
-                                            borderWidth: 3,
-                                            pointBackgroundColor: '#c40000',
-                                            pointRadius: 4
+                                            backgroundColor: '#c40000'
                                         },
                                         {
                                             label: 'Payment',
                                             data: data.payment,
-                                            borderColor: '#28a745',
-                                            backgroundColor: 'rgba(40,167,69,0.05)',
-                                            tension: 0.4,
-                                            fill: true,
-                                            borderWidth: 3,
-                                            pointBackgroundColor: '#28a745',
-                                            pointRadius: 4
+                                            backgroundColor: '#28a745'
                                         },
                                         {
                                             label: 'Return',
                                             data: data.return,
-                                            borderColor: '#ffc107',
-                                            backgroundColor: 'rgba(255,193,7,0.05)',
-                                            tension: 0.4,
-                                            fill: true,
-                                            borderWidth: 3,
-                                            pointBackgroundColor: '#ffc107',
-                                            pointRadius: 4
+                                            backgroundColor: '#ffc107'
                                         }
                                     ]
                                 },
@@ -294,47 +270,12 @@
                                     maintainAspectRatio: true,
                                     plugins: {
                                         legend: {
-                                            position: 'top',
-                                            labels: {
-                                                usePointStyle: true,
-                                                padding: 20,
-                                                font: {size: 12, weight: '500'}
-                                            }
-                                        },
-                                        tooltip: {
-                                            mode: 'index',
-                                            intersect: false,
-                                            callbacks: {
-                                                label: function (context) {
-                                                    let label = context.dataset.label || '';
-                                                    let value = context.raw || 0;
-                                                    return label + ': ₹ ' + value.toLocaleString('en-IN', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
-                                                    });
-                                                }
-                                            }
+                                            position: 'top'
                                         }
                                     },
                                     scales: {
-                                        x: {
-                                            grid: {display: false},
-                                            title: {
-                                                display: true,
-                                                text: filter === 'year' ? 'Month' :
-                                                        filter === 'month' ? 'Week' : 'Date',
-
-                                                font: {weight: '500', size: 12}
-                                            }
-                                        },
                                         y: {
                                             beginAtZero: true,
-                                            grid: {color: 'rgba(0,0,0,0.05)'},
-                                            title: {
-                                                display: true,
-                                                text: 'Amount (₹)',
-                                                font: {weight: '500', size: 12}
-                                            },
                                             ticks: {
                                                 callback: function (value) {
                                                     return '₹ ' + value.toLocaleString('en-IN');
@@ -344,21 +285,17 @@
                                     }
                                 }
                             });
+
                         })
-                        .catch(error => {
-                            console.error("Error loading chart:", error);
-                            alert("Failed to load chart data. Please try again.");
-                        });
+                        .catch(err => console.error(err));
             }
 
-            // Filter change event
             document.getElementById("filter").addEventListener("change", function () {
                 loadChart(this.value);
             });
 
-            // Initial load
             loadChart("week");
-
         </script>
+
     </body>
 </html>

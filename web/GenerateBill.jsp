@@ -95,7 +95,13 @@
                 padding:4px 10px;
                 border-radius:4px;
             }
-
+            .balance-input{
+                width:100%;
+                text-align:right;
+                border:none;
+                background:transparent;
+                font-weight:600;
+            }
             .print-btn{
                 background:#c82333;
                 color:#fff;
@@ -162,15 +168,15 @@
 
                 <div class="row1">
                     <div>
-                        Customer Name: <span id="nameDisplay"></span>
+                        <b> Customer Name: </b><span id="nameDisplay"></span>
                     </div>
                     <div>
-                        Invoice No: <span id="invoiceNumber"></span>
+                        <b> Invoice No:</b> <span id="invoiceNumber"></span>
                     </div>
                 </div>
 
                 <div class="row2">
-                    Date: <span id="dateDisplay"></span>
+                    <b> Date:</b> <span id="dateDisplay"></span>
                 </div>
 
                 <div class="row3">
@@ -199,7 +205,7 @@
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th width="80">Qty</th>
+                        <th width="100">Qty</th>
                         <th width="100">Price</th>
                         <th width="120">Amount</th>
                         <th width="80" class="no-print">Remove</th>
@@ -229,13 +235,9 @@
                         <td colspan="2" id="daysAmount">0.00</td>
                     </tr>
 
-                    <tr>
-                        <td colspan="3" class="text-end fw-bold">Previous Balance</td>
-                        <td colspan="2">
-                            <input type="number" id="balance" value="0" readonly
-                                   style="width:120px;text-align:right;border:none;background:#fff;">
-                        </td>
-                    </tr>
+                    <tr> 
+                        <td colspan="3" class="text-end fw-bold">Previous Balance</td> 
+                        <td colspan="2" id="balance" class="amount-column">0.00</td> </tr>
 
                     <tr>
                         <td colspan="3" class="text-end fw-bold">Total Amount</td>
@@ -310,7 +312,7 @@
                     }
                 });
                 document.getElementById("daysAmount").innerText = total.toFixed(2);
-                let balance = parseFloat(document.getElementById("balance").value) || 0;
+                let balance = parseFloat(document.getElementById("balance").innerText) || 0;
                 document.getElementById("totalAmount").innerText = (total + balance).toFixed(2);
             }
 
@@ -330,7 +332,7 @@
                     fetch("GetBalance.jsp?customer=" + encodeURIComponent(name))
                             .then(res => res.json())
                             .then(data => {
-                                document.getElementById("balance").value = data.balance || 0;
+                               document.getElementById("balance").innerText = parseFloat(data.balance || 0).toFixed(2);
                                 calculateTotal();
                             })
                             .catch(err => console.error("Balance fetch error:", err));
@@ -405,7 +407,7 @@
                 formData.append("customer_name", name);
                 formData.append("bill_date", date);
                 formData.append("days_amount", document.getElementById("daysAmount").innerText);
-                formData.append("balance", document.getElementById("balance").value);
+                formData.append("balance", document.getElementById("balance").innerText);
                 formData.append("total_amount", document.getElementById("totalAmount").innerText);
                 formData.append("items_json", JSON.stringify(items));
 
