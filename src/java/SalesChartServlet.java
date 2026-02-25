@@ -1,93 +1,155 @@
-package com.svs;
-
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.YearMonth;
+
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import DBConnection.DBConnection;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import DBConnection.DBConnection;
 
+@WebServlet("/SalesChartServlet")
 public class SalesChartServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
 
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
 
-        String filter = request.getParameter("filter"); // week | month | year
-
         JSONArray labels = new JSONArray();
-        JSONArray billArr = new JSONArray();
-        JSONArray paymentArr = new JSONArray();
-        JSONArray returnArr = new JSONArray();
+        JSONArray billData = new JSONArray();
+        JSONArray paymentData = new JSONArray();
+        JSONArray returnData = new JSONArray();
 
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        String filter = request.getParameter("filter");
+        if (filter == null) filter = "week";   // ✅ default current week
 
-        try {
-            con = DBConnection.getConnection();
+        String yearParam = request.getParameter("year");
+        String monthParam = request.getParameter("month");
 
+        LocalDate today = LocalDate.now();
+        int year = (yearParam != null) ? Integer.parseInt(yearParam) : today.getYear();
+        int month = (monthParam != null) ? Integer.parseInt(monthParam) : today.getMonthValue();
+
+        try (Connection con = DBConnection.getConnection()) {
+
+            PreparedStatement ps = null;
             String query = "";
 
+            // =========================================================
+            // ✅ 1️⃣ WEEK FILTER (Default → Current Week days wise)
+            // =========================================================
             if ("week".equals(filter)) {
-                query =
-                  "SELECT TO_CHAR(created_at, 'DD Mon') AS label, " +
-                  "COALESCE(SUM(total_amount),0) AS bill, " +
-                  "0 AS payment, " +
-                  "0 AS ret " +
-                  "FROM bills " +
-                  "WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' " +
-                  "GROUP BY label ORDER BY MIN(created_at)";
 
-            } else if ("month".equals(filter)) {
-                query =
-                  "SELECT 'Week ' || EXTRACT(WEEK FROM created_at) AS label, " +
-                  "COALESCE(SUM(total_amount),0) AS bill, " +
-                  "0 AS payment, " +
-                  "0 AS ret " +
-                  "FROM bills " +
-                  "WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE) " +
-                  "GROUP BY label ORDER BY label";
+                LocalDate startOfWeek = today.minusDays(today.getDayOfWeek().getValue() - 1);
 
-            } else { // year
-                query =
-                  "SELECT TO_CHAR(created_at, 'Mon') AS label, " +
-                  "COALESCE(SUM(total_amount),0) AS bill, " +
-                  "0 AS payment, " +
-                  "0 AS ret " +
-                  "FROM bills " +
-                  "WHERE DATE_TRUNC('year', created_at) = DATE_TRUNC('year', CURRENT_DATE) " +
-                  "GROUP BY label ORDER BY MIN(created_at)";
+                query = "SELECT DATE(created_at) as day, " +
+                        "COALESCE(SUM(total_amount),0) as bill, " +
+                        "COALESCE(SUM(paid_amount),0) as payment, " +
+                        "COALESCE(SUM(return_amount),0) as return_amt " +
+                        "FROM bills " +
+                        "WHERE created_at >= ? AND created_at < ? " +
+                        "GROUP BY DATE(created_at) " +
+                        "ORDER BY DATE(created_at)";
+
+                ps = con.prepareStatement(query);
+                ps.setDate(1, java.sql.Date.valueOf(startOfWeek));
+                ps.setDate(2, java.sql.Date.valueOf(startOfWeek.plusDays(7)));
+
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    labels.put(rs.getString("day"));
+                    billData.put(rs.getDouble("bill"));
+                    paymentData.put(rs.getDouble("payment"));
+                    returnData.put(rs.getDouble("return_amt"));
+                }
+                rs.close();
             }
 
-            ps = con.prepareStatement(query);
-            rs = ps.executeQuery();
+            // =========================================================
+            // ✅ 2️⃣ MONTH FILTER (Week wise inside selected month)
+            // =========================================================
+            else if ("month".equals(filter)) {
 
-            while (rs.next()) {
-                labels.put(rs.getString("label"));
-                billArr.put(rs.getDouble("bill"));
-                paymentArr.put(0);  // future ready
-                returnArr.put(0);
+                query = "SELECT EXTRACT(WEEK FROM created_at) as week_no, " +
+                        "COALESCE(SUM(total_amount),0) as bill, " +
+                        "COALESCE(SUM(paid_amount),0) as payment, " +
+                        "COALESCE(SUM(return_amount),0) as return_amt " +
+                        "FROM bills " +
+                        "WHERE EXTRACT(YEAR FROM created_at)=? " +
+                        "AND EXTRACT(MONTH FROM created_at)=? " +
+                        "GROUP BY week_no " +
+                        "ORDER BY week_no";
+
+                ps = con.prepareStatement(query);
+                ps.setInt(1, year);
+                ps.setInt(2, month);
+
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    labels.put("Week " + rs.getInt("week_no"));
+                    billData.put(rs.getDouble("bill"));
+                    paymentData.put(rs.getDouble("payment"));
+                    returnData.put(rs.getDouble("return_amt"));
+                }
+                rs.close();
+            }
+
+            // =========================================================
+            // ✅ 3️⃣ YEAR FILTER (Month wise inside selected year)
+            // =========================================================
+            else if ("year".equals(filter)) {
+
+                query = "SELECT EXTRACT(MONTH FROM created_at) as month_no, " +
+                        "COALESCE(SUM(total_amount),0) as bill, " +
+                        "COALESCE(SUM(paid_amount),0) as payment, " +
+                        "COALESCE(SUM(return_amount),0) as return_amt " +
+                        "FROM bills " +
+                        "WHERE EXTRACT(YEAR FROM created_at)=? " +
+                        "GROUP BY month_no " +
+                        "ORDER BY month_no";
+
+                ps = con.prepareStatement(query);
+                ps.setInt(1, year);
+
+                ResultSet rs = ps.executeQuery();
+
+                String[] months = {
+                        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                };
+
+                while (rs.next()) {
+                    int m = rs.getInt("month_no");
+                    labels.put(months[m]);
+                    billData.put(rs.getDouble("bill"));
+                    paymentData.put(rs.getDouble("payment"));
+                    returnData.put(rs.getDouble("return_amt"));
+                }
+                rs.close();
             }
 
             JSONObject json = new JSONObject();
             json.put("labels", labels);
-            json.put("bill", billArr);
-            json.put("payment", paymentArr);
-            json.put("return", returnArr);
+            json.put("bill", billData);
+            json.put("payment", paymentData);
+            json.put("return", returnData);
 
             out.print(json.toString());
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try { if (rs != null) rs.close(); } catch (Exception e) {}
-            try { if (ps != null) ps.close(); } catch (Exception e) {}
-            try { if (con != null) con.close(); } catch (Exception e) {}
+            JSONObject error = new JSONObject();
+            error.put("error", e.getMessage());
+            out.print(error.toString());
         }
     }
 }
