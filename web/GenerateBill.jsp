@@ -16,14 +16,14 @@
 
             /* Main Card */
             .bill-card{
-    width:600px;
-    margin:40px auto;
-    margin-left:500px;   /* you can adjust */
-    background:#fff;
-    border:2px solid #c82333;
-    padding:25px;
-    border-radius:15px;
-}
+                width:600px;
+                margin:40px auto;
+                margin-left:500px;   /* you can adjust */
+                background:#fff;
+                border:2px solid #c82333;
+                padding:25px;
+                border-radius:15px;
+            }
 
             /* Header */
             .invoice-header{
@@ -45,17 +45,18 @@
 
             .row3{
                 display:flex;
-                gap:10px;
+                gap:15px;        /* same gap */
                 margin-top:10px;
             }
 
             .row3 select,
             .row3 input{
+                flex:1;          /* 🔥 equal split */
                 height:38px;
                 border-radius:6px;
                 border:1px solid #ccc;
                 padding:5px 10px;
-                min-width:200px;
+                min-width:0;     /* 🔥 important */
             }
 
             /* Table */
@@ -103,39 +104,51 @@
                 border-radius:6px;
                 margin-top:20px;
             }
+            .print-only{
+                display:none;
+            }
+            @media print {
 
-            /* PRINT FORMAT */
-@media print{
+                @page {
+                    size: A4 portrait;
+                    margin: 20mm;
+                }
 
-    body{
-        background:#fff !important;
-    }
+                body {
+                    background: #fff !important;
+                }
 
-    body *{
-        visibility:hidden;
-    }
+                body * {
+                    visibility: hidden;
+                }
 
-    #printArea, #printArea *{
-        visibility:visible;
-    }
+                #printArea, #printArea * {
+                    visibility: visible;
+                }
 
-    #printArea{
-        position:relative !important;
-        margin:0 auto !important;     /* always center */
-        width:700px !important;       /* fixed width */
-        border:2px solid #000 !important;
-        border-radius:15px !important;
-        padding:25px !important;
-        left:auto !important;         /* prevent left shift */
-    }
+                #printArea {
+                    width: 500px !important;
+                    margin: 0 auto !important;
+                    border: 2px solid #c82333 !important;
+                    border-radius: 12px !important;
+                    padding: 20px !important;
+                    background: #fff;
+                    position: static !important;
+                }
 
-    .no-print,
-    .print-btn,
-    .add-btn,
-    .row3{
-        display:none !important;
-    }
-}
+                /* Hide only unwanted things */
+                .no-print,
+                .print-btn,
+                .add-btn,
+                .row3 {
+                    display: none !important;
+                }
+
+                .print-only {
+                    display: block !important;
+                }
+            }
+
         </style>
     </head>
 
@@ -149,7 +162,7 @@
 
                 <div class="row1">
                     <div>
-                        Customer Name: <span id="nameDisplay">__________</span>
+                        Customer Name: <span id="nameDisplay"></span>
                     </div>
                     <div>
                         Invoice No: <span id="invoiceNumber"></span>
@@ -157,7 +170,7 @@
                 </div>
 
                 <div class="row2">
-                    Date: <span id="dateDisplay">__________</span>
+                    Date: <span id="dateDisplay"></span>
                 </div>
 
                 <div class="row3">
@@ -205,7 +218,7 @@
                         </td>
                     </tr>
 
-                    <tr>
+                    <tr class="add-row no-print">
                         <td colspan="5">
                             <button type="button" class="add-btn" onclick="addRow()">+ Add Row</button>
                         </td>
@@ -231,7 +244,16 @@
 
                 </tbody>
             </table>
+            <!-- Amount in Words (Print Only) -->
+            <div class="print-only" style="margin-top: 15px; font-size: 10pt; border-top: 1px dashed #333; padding-top: 10px;">
+                <span class="info-label">Amount in Words:</span><br>
+                <span id="amountInWords"></span>
+            </div>
 
+            <!-- Bill Footer (Print Only) -->
+            <div class="bill-footer print-only">
+                <div>* Thank you for your order. Please order again *</div>
+            </div>
             <div class="text-center">
                 <button class="print-btn" onclick="printBill()">Print Bill</button>
             </div>
@@ -243,16 +265,22 @@
             let currentInvoiceNumber = "";
 
             function addRow() {
+
                 const tbody = document.getElementById("billBody");
+                const addButtonRow = document.querySelector(".add-row");
+
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                <td><input type="text" class="form-control item"></td>
-                <td><input type="number" class="form-control qty" min="1"></td>
-                <td><input type="number" class="form-control amt" min="0" step="0.01"></td>
-                <td class="amount-column">0.00</td>
-                <td><button type="button" class="remove-btn" onclick="removeRow(this)">X</button></td>
-            `;
-                tbody.insertBefore(row, tbody.children[tbody.children.length - 4]);
+        <td><input type="text" class="form-control item"></td>
+        <td><input type="number" class="form-control qty" min="1"></td>
+        <td><input type="number" class="form-control amt" min="0" step="0.01"></td>
+        <td class="amount-column">0.00</td>
+        <td class="no-print">
+            <button type="button" class="remove-btn" onclick="removeRow(this)">X</button>
+        </td>
+    `;
+
+                tbody.insertBefore(row, addButtonRow);
             }
 
             function removeRow(btn) {
@@ -389,16 +417,81 @@
                 })
                         .then(res => {
                             if (res.ok) {
-                                // 🔥 After save → Print
+
+                                // Convert total to words
+                                const total = parseInt(document.getElementById("totalAmount").innerText);
+                                document.getElementById("amountInWords").innerText = numberToWords(total);
+
+                                // 🔥 PRINT HERE
                                 window.print();
+
                             } else {
                                 alert("Error saving bill");
                             }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            alert("Server error");
-                        });
+                        }).catch(err => {
+                    console.error(err);
+                    alert("Server error");
+                });
+            }
+            function numberToWords(num) {
+
+                num = parseInt(num);
+
+                if (isNaN(num))
+                    return "";
+
+                if (num === 0)
+                    return "Zero Only";
+
+                const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
+                    "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen",
+                    "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+
+                const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty",
+                    "Sixty", "Seventy", "Eighty", "Ninety"];
+
+                function convertBelowThousand(n) {
+                    let str = "";
+
+                    if (n > 99) {
+                        str += ones[Math.floor(n / 100)] + " Hundred ";
+                        n = n % 100;
+                    }
+
+                    if (n > 19) {
+                        str += tens[Math.floor(n / 10)] + " ";
+                        n = n % 10;
+                    }
+
+                    if (n > 0) {
+                        str += ones[n] + " ";
+                    }
+
+                    return str;
+                }
+
+                let result = "";
+
+                if (num >= 10000000) {
+                    result += convertBelowThousand(Math.floor(num / 10000000)) + "Crore ";
+                    num %= 10000000;
+                }
+
+                if (num >= 100000) {
+                    result += convertBelowThousand(Math.floor(num / 100000)) + "Lakh ";
+                    num %= 100000;
+                }
+
+                if (num >= 1000) {
+                    result += convertBelowThousand(Math.floor(num / 1000)) + "Thousand ";
+                    num %= 1000;
+                }
+
+                if (num > 0) {
+                    result += convertBelowThousand(num);
+                }
+
+                return result.trim() + "Only";
             }
             window.onafterprint = function () {
                 location.reload();   // 🔥 Page Reload
