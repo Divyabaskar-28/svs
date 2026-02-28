@@ -31,8 +31,8 @@
         rs.close(); ps.close();
 
         String billQuery = isMySQL ?
-            "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE()" :
-            "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE";
+            "SELECT COALESCE(SUM(day_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE()" :
+            "SELECT COALESCE(SUM(day_amount),0) FROM bills WHERE DATE(created_at)=CURRENT_DATE";
 
         ps = con.prepareStatement(billQuery);
         rs = ps.executeQuery();
