@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 
 public class DBConnection {
 
-    // true → use online PostgreSQL (Render)
+    // true → use Supabase PostgreSQL
     // false → use local MySQL
     private static final boolean USE_ONLINE_DB = true;
 
@@ -15,17 +15,17 @@ public class DBConnection {
         String password;
 
         if (USE_ONLINE_DB) {
-            // ===== Online PostgreSQL (Render) =====
+            // ===== Supabase PostgreSQL =====
             Class.forName("org.postgresql.Driver");
-            
-           
-            url = "jdbc:postgresql://dpg-d5sqhqnpm1nc73ciort0-a.singapore-postgres.render.com:5432/svsdb?sslmode=require";
-            username = "svsdb_user";
-            password = "qQJbW7HKaALzEbq56aF55Pd9gIEdQDmG";
+
+            url = "jdbc:postgresql://db.zoaafspbjvqzbxovoyrd.supabase.co:5432/postgres?sslmode=require";
+            username = "postgres";
+            password = "kfQKrgLTL7SjEcST";  // ← Put your real password here
+
         } else {
             // ===== Local MySQL (XAMPP) =====
-            Class.forName("com.mysql.jdbc.Driver");
-            
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
             url = "jdbc:mysql://localhost:3306/svs";
             username = "root";
             password = "";
