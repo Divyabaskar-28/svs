@@ -15,7 +15,7 @@ public class DBConnection {
         if (USE_ONLINE_DB) {
             Class.forName("org.postgresql.Driver");
 
-            url = "jdbc:postgresql://db.zoaafspbjvqzbxovoyrd.supabase.co:5432/postgres?sslmode=require";
+            url = "jdbc:postgresql://db.zoaafspbjvqzbxovoyrd.supabase.co:5432/svsdb?sslmode=require";
             username = "postgres";
             password = "kfQKrgLTL7SjEcST";
 
