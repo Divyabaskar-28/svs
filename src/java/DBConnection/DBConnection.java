@@ -21,6 +21,9 @@ public class DBConnection {
             url = System.getenv("DB_URL");
             username = System.getenv("DB_USER");
             password = System.getenv("DB_PASSWORD");
+            // ✅ ADD HERE
+            System.out.println("DB_URL: " + url);
+            System.out.println("DB_USER: " + username);
 
         } else {
 
