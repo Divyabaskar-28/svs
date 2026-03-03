@@ -107,9 +107,18 @@
             }
 
             .main-content{
-                margin-left:250px;
+                margin-left:260px;
                 padding:35px 30px;
                 min-height:100vh;
+                transition:0.3s;
+            }
+
+            /* 📱 Mobile */
+            @media (max-width: 991px){
+                .main-content{
+                    margin-left:0;
+                    padding:20px 15px;
+                }
             }
 
             .welcome-box{

@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 
 public class DBConnection {
 
-    private static final boolean USE_ONLINE_DB = true;
+    private static final boolean USE_ONLINE_DB = false;
 
     public static Connection getConnection() throws Exception {
 

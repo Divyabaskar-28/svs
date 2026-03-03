@@ -1,4 +1,3 @@
-
 import DBConnection.DBConnection;
 import java.io.IOException;
 import java.sql.*;
@@ -12,115 +11,98 @@ public class SavePaymentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        Connection con = null;
-        PreparedStatement psLatest = null;
-        PreparedStatement psInsert = null;
-        PreparedStatement psUpdate = null;
-        ResultSet rsLatest = null;
+        HttpSession session = request.getSession();
+        String paidBy = "Unknown";
+        if (session.getAttribute("admin_username") != null) {
+            paidBy = session.getAttribute("admin_username").toString();
+        }
+
+        String customerName = request.getParameter("customer_name");
+        String paymentMode = request.getParameter("payment_mode");
+        double paidAmount = 0.0;
 
         try {
-            HttpSession session = request.getSession();
-            String paidBy = "Unknown";
-            if (session.getAttribute("admin_username") != null) {
-                paidBy = session.getAttribute("admin_username").toString();
-            }
+            paidAmount = Double.parseDouble(request.getParameter("paid_amount"));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            response.sendRedirect("Payment.jsp?status=error");
+            return;
+        }
 
-            String customerName = request.getParameter("customer_name");
-            double paidAmount = Double.parseDouble(request.getParameter("paid_amount"));
-//            double returnAmount = Double.parseDouble(request.getParameter("return_amount"));
-            String paymentMode = request.getParameter("payment_mode");
+        String latestSql = "SELECT invoice_no, total_amount, paid_amount, balance " +
+                           "FROM bills WHERE customer_name=? ORDER BY created_at DESC LIMIT 1";
 
-            con = DBConnection.getConnection();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement psLatest = con.prepareStatement(latestSql)) {
 
-            // 🔹 1️⃣ Get latest bill for this customer
-            String latestSql
-                    = "SELECT invoice_no, total_amount FROM bills "
-                    + "WHERE customer_name=? ORDER BY created_at DESC LIMIT 1";
-
-            psLatest = con.prepareStatement(latestSql);
             psLatest.setString(1, customerName);
-            rsLatest = psLatest.executeQuery();
+            try (ResultSet rsLatest = psLatest.executeQuery()) {
 
-            if (!rsLatest.next()) {
-                response.sendRedirect("Payment.jsp?status=notfound");
-                return;
+                if (!rsLatest.next()) {
+                    response.sendRedirect("Payment.jsp?status=notfound");
+                    return;
+                }
+
+                String invoiceNo = rsLatest.getString("invoice_no");
+                double totalAmount = rsLatest.getDouble("total_amount");
+
+                // Null-safe fetch of balance and paid_amount
+                double currentBalance = rsLatest.getDouble("balance");
+                if (rsLatest.wasNull()) currentBalance = totalAmount;
+
+                double currentPaid = rsLatest.getDouble("paid_amount");
+                if (rsLatest.wasNull()) currentPaid = 0.0;
+
+                // Calculate new balance and cumulative paid
+                double newBalance = currentBalance - paidAmount;
+                double newPaid = currentPaid + paidAmount;
+
+                // Round to 2 decimals
+                newBalance = Math.round(newBalance * 100.0) / 100.0;
+                newPaid = Math.round(newPaid * 100.0) / 100.0;
+
+                // Begin transaction
+                con.setAutoCommit(false);
+
+                // 1️⃣ Insert into payment_history
+                String insertSql = "INSERT INTO payment_history " +
+                        "(invoice_no, customer_name, paid_amount, balance_after, payment_mode, paid_by, payment_time) " +
+                        "VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)";
+                try (PreparedStatement psInsert = con.prepareStatement(insertSql)) {
+                    psInsert.setString(1, invoiceNo);
+                    psInsert.setString(2, customerName);
+                    psInsert.setDouble(3, paidAmount);
+                    psInsert.setDouble(4, newBalance);
+                    psInsert.setString(5, paymentMode);
+                    psInsert.setString(6, paidBy);
+                    psInsert.executeUpdate();
+                }
+
+                // 2️⃣ Update bills table
+                String updateSql = "UPDATE bills SET balance=?, paid_amount=?, payment_mode=?, paid_by=?, payment_time=CURRENT_TIMESTAMP " +
+                                   "WHERE invoice_no=?";
+                try (PreparedStatement psUpdate = con.prepareStatement(updateSql)) {
+                    psUpdate.setDouble(1, newBalance);
+                    psUpdate.setDouble(2, newPaid);
+                    psUpdate.setString(3, paymentMode);
+                    psUpdate.setString(4, paidBy);
+                    psUpdate.setString(5, invoiceNo);
+                    psUpdate.executeUpdate();
+                }
+
+                // Commit transaction
+                con.commit();
+                response.sendRedirect("Payment.jsp?status=success");
+
+            } catch (SQLException e) {
+                con.rollback();
+                e.printStackTrace();
+                response.sendRedirect("Payment.jsp?status=error");
             }
-
-            String invoiceNo = rsLatest.getString("invoice_no");
-            double totalAmount = rsLatest.getDouble("total_amount");
-
-            double newBalance;
-
-            newBalance = totalAmount - paidAmount;
-            newBalance = Math.round(newBalance * 100.0) / 100.0;
-
-// negative allowed 👍
-// negative allowed 👍
-// ❌ Negative allowed – DO NOT clamp
-            // 🔹 3️⃣ Insert into payment_history
-            String insertSql = "INSERT INTO payment_history "
-                    + "(invoice_no, customer_name, paid_amount,balance_after, "
-                    + "payment_mode, paid_by, payment_time) "
-                    + "VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)";
-            psInsert = con.prepareStatement(insertSql);
-            psInsert.setString(1, invoiceNo);
-            psInsert.setString(2, customerName);
-            psInsert.setDouble(3, paidAmount);
-//            psInsert.setDouble(4, returnAmount);
-            psInsert.setDouble(4, newBalance);
-            psInsert.setString(5, paymentMode);
-            psInsert.setString(6, paidBy);
-            psInsert.executeUpdate();
-
-            // 🔹 4️⃣ Update latest bill balance
-            String updateSql = "UPDATE bills SET balance=?, paid_amount=?, "
-                    + "payment_mode=?, paid_by=?, payment_time=CURRENT_TIMESTAMP "
-                    + "WHERE invoice_no=?";
-            psUpdate = con.prepareStatement(updateSql);
-            psUpdate.setDouble(1, newBalance);
-            psUpdate.setDouble(2, paidAmount);
-//            psUpdate.setDouble(3, returnAmount);
-            psUpdate.setString(3, paymentMode);
-            psUpdate.setString(4, paidBy);
-            psUpdate.setString(5, invoiceNo);
-            psUpdate.executeUpdate();
-
-            response.sendRedirect("Payment.jsp?status=success");
 
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect("Payment.jsp?status=error");
-        } finally {
-            try {
-                if (rsLatest != null) {
-                    rsLatest.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (psLatest != null) {
-                    psLatest.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (psInsert != null) {
-                    psInsert.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (psUpdate != null) {
-                    psUpdate.close();
-                }
-            } catch (Exception e) {
-            }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            } catch (Exception e) {
-            }
         }
     }
 }

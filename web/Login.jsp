@@ -4,6 +4,9 @@
 <head>
     <title>Admin Login - SVS Sweets</title>
 
+    <!-- ✅ Important for Responsive Design -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
     <style>
@@ -14,6 +17,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 15px; /* ✅ prevents overflow on small devices */
         }
 
         /* 🔥 Login Card */
@@ -56,6 +60,7 @@
             border-radius: 10px;
             border: 1px solid #ddd;
             transition: 0.3s;
+            font-size: 14px;
         }
 
         .form-control:focus {
@@ -107,6 +112,51 @@
             70% { box-shadow: 0 0 0 15px rgba(220,20,60,0); }
             100% { box-shadow: 0 0 0 0 rgba(220,20,60,0); }
         }
+
+        /* ✅ Extra Small Devices */
+        @media (max-width: 576px) {
+
+            .login-box {
+                padding: 25px 20px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            .sub-text {
+                font-size: 13px;
+            }
+
+            .logo-circle {
+                width: 60px;
+                height: 60px;
+                font-size: 22px;
+            }
+
+            .form-control {
+                height: 42px;
+            }
+
+            .btn-danger {
+                height: 42px;
+            }
+        }
+
+        /* ✅ Tablets */
+        @media (min-width: 577px) and (max-width: 992px) {
+            .login-box {
+                max-width: 450px;
+            }
+        }
+
+        /* ✅ Large Screens */
+        @media (min-width: 1200px) {
+            .login-box {
+                max-width: 420px;
+            }
+        }
+
     </style>
 
     <script>
@@ -134,11 +184,11 @@
 
         <form name="loginForm" action="AdminLoginServlet" method="post" onsubmit="return validateLogin();">
 
-            <div class="form-group mb-3">
+            <div class="mb-3">
                 <input type="text" name="username" class="form-control" placeholder="Username">
             </div>
 
-            <div class="form-group mb-2">
+            <div class="mb-2">
                 <input type="password" name="password" class="form-control" placeholder="Password">
             </div>
 

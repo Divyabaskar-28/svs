@@ -14,9 +14,7 @@ public class AdminLoginServlet extends HttpServlet {
 
         String uname = request.getParameter("username");
         String pass = request.getParameter("password");
-         // ✅ ADD HERE
-    System.out.println("Login servlet started...");
-    System.out.println("Username: " + uname);
+        
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(
