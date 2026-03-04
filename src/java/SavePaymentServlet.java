@@ -62,7 +62,7 @@ public class SavePaymentServlet extends HttpServlet {
                 newPaid = Math.round(newPaid * 100.0) / 100.0;
 
                 // Begin transaction
-                con.setAutoCommit(false);
+                
 
                 // 1️⃣ Insert into payment_history
                 String insertSql = "INSERT INTO payment_history " +
@@ -91,11 +91,11 @@ public class SavePaymentServlet extends HttpServlet {
                 }
 
                 // Commit transaction
-                con.commit();
+                
                 response.sendRedirect("Payment.jsp?status=success");
 
             } catch (SQLException e) {
-                con.rollback();
+                
                 e.printStackTrace();
                 response.sendRedirect("Payment.jsp?status=error");
             }
